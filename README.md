@@ -24,8 +24,19 @@
 > 首次启动会自动生成 `.env` 里的 `ENCRYPTION_KEY`（数据加密密钥），请勿泄露或删除。
 
 ## 部署到线上（给同事/客人用）
-把本仓库推到 GitHub，然后连到任意支持 Python 的云平台（Render / Railway / 腾讯云 EdgeOne Makers 等）即可。
-平台环境变量里设置 `PORT`（平台通常会自动给）、`ADMIN_PASSWORD`、`ENCRYPTION_KEY` 等。
+本程序是 **Python 后端 + SQLite**，需要能运行 Python 的托管平台（推荐 Render / Railway，或任意云服务器），不是纯静态托管。
+
+1. 把仓库推到 GitHub（见上）。
+2. 在平台新建 Web Service，关联该仓库。
+3. 启动命令用仓库里的 `Procfile`：`python app.py`（已就绪）。
+4. 平台环境变量里设置：
+   - `PORT`：平台通常会自动注入，无需手填
+   - `ADMIN_PASSWORD`：后台密码（务必改成自己的）
+   - `ENCRYPTION_KEY`：首次本地运行已自动生成，部署时可复用同一值，或重新生成一个
+   - 可选：`REQUIRE_ID=1`（开启强制实名）、`CAPACITY`（每段名额）、`RETENTION_DAYS`（留存天数）
+5. 部署完成后，访客打开平台给的地址即可预约；后台在 `/admin`。
+
+> 数据存在平台实例的 `data.db` 里。若平台会定期重置文件系统（如某些免费实例），请定期用后台"导出 CSV"备份报名数据。
 
 ## 目录结构
 ```
