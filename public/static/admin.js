@@ -123,10 +123,17 @@ async function startScan() {
     return;
   }
   try {
+    // 优先后置（手机扫码），失败则前置（笔记本/PC），再失败则任意
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' } },
       audio: false,
-    });
+    }).catch(() => navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user' },
+      audio: false,
+    })).catch(() => navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false,
+    }));
     const v = $('#scanVideo');
     v.srcObject = stream;
     v.style.display = '';
@@ -318,12 +325,14 @@ function renderManageTable(list) {
       : x.attended
         ? '<span class="badge success">已到场</span>'
         : '<span class="badge warning">待核销</span>';
-    const markBtn = x.status === 'active' && !x.attended
-      ? `<button class="btn btn-ghost btn-sm" data-mark="${x.id}">标记到场</button>`
-      : '';
-    const cancelBtn = x.status === 'active'
-      ? `<button class="btn btn-ghost btn-sm" data-cancel="${x.id}">取消</button>`
-      : '';
+    // 操作按钮
+    let actionBtns = '';
+    if (x.status === 'active' && !x.attended) {
+      actionBtns = `<button class="btn btn-ghost btn-sm" data-mark="${x.id}">标记到场</button>`;
+    } else if (x.status === 'active' && x.attended) {
+      actionBtns = `<button class="btn btn-ghost btn-sm" data-unmark="${x.id}">取消标记</button>`;
+    }
+    // 已取消不显示任何操作按钮
     return `
       <tr>
         <td><span class="shortcode">${escapeHtml(x.short_code || '-')}</span></td>
@@ -333,13 +342,13 @@ function renderManageTable(list) {
         <td>${escapeHtml((x.companions || []).map(maskNameJs).join('、') || '-')}</td>
         <td class="nowrap">${escapeHtml(x.date || '-')}<br><span class="muted">${escapeHtml((x.start || '') + '–' + (x.end || ''))}</span></td>
         <td>${stBadge}</td>
-        <td>${markBtn}${cancelBtn}</td>
+        <td>${actionBtns}</td>
       </tr>
     `;
   }).join('');
   // 绑定操作
   body.querySelectorAll('[data-mark]').forEach((b) => b.addEventListener('click', () => doMark(b.dataset.mark)));
-  body.querySelectorAll('[data-cancel]').forEach((b) => b.addEventListener('click', () => doAdminCancel(b.dataset.cancel)));
+  body.querySelectorAll('[data-unmark]').forEach((b) => b.addEventListener('click', () => doUnmark(b.dataset.unmark)));
 }
 function maskNameJs(s) {
   if (!s) return '';
@@ -350,6 +359,13 @@ async function doMark(id) {
   const r = await api('/api/admin/checkin/' + id, { method: 'POST' });
   if (r.status === 200 && r.data && r.data.ok) {
     toast({ type: 'success', title: '已标记到场' });
+    refreshManage();
+  } else { toast({ type: 'danger', title: '操作失败' }); }
+}
+async function doUnmark(id) {
+  const r = await api('/api/admin/unmark/' + id, { method: 'POST' });
+  if (r.status === 200 && r.data && r.data.ok) {
+    toast({ type: 'success', title: '已取消标记' });
     refreshManage();
   } else { toast({ type: 'danger', title: '操作失败' }); }
 }

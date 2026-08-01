@@ -169,6 +169,12 @@ export function buildApp({ db, config, assets }) {
     return c.json({ ok: true });
   });
 
+  // 取消标记
+  app.post('/api/admin/unmark/:id', requireAdmin, async (c) => {
+    await db.run('UPDATE bookings SET attended=0 WHERE id=?', [c.req.param('id')]);
+    return c.json({ ok: true });
+  });
+
   // 管理员取消预约（释放名额）
   app.post('/api/admin/cancel/:id', requireAdmin, async (c) => {
     const id = c.req.param('id');

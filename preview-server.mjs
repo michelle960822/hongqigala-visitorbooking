@@ -208,6 +208,12 @@ async function handleApi(req, url) {
     return json({ ok: true });
   }
 
+  if (p.startsWith('/api/admin/unmark/') && method === 'POST') {
+    if (!(await requireAdmin(req))) return json({ ok: false, msg: '未登录' }, 401);
+    await adapter.run('UPDATE bookings SET attended=0 WHERE id=?', [p.slice('/api/admin/unmark/'.length)]);
+    return json({ ok: true });
+  }
+
   if (p.startsWith('/api/admin/cancel/') && method === 'POST') {
     if (!(await requireAdmin(req))) return json({ ok: false, msg: '未登录' }, 401);
     const id = p.slice('/api/admin/cancel/'.length);
