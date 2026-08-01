@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员后台</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="admin">
+    <div id="login" class="card center" style="display:none">
+      <h1>管理员后台</h1>
+      <p class="sub">请输入管理密码</p>
+      <p class="msg err" id="loginErr"></p>
+      <form id="loginForm">
+        <label>密码<input type="password" id="pwd" required autofocus></label>
+        <button type="submit" class="primary">登录</button>
+      </form>
+    </div>
+
+    <div id="dash" style="display:none">
+      <div class="topbar">
+        <h1>报名管理后台</h1>
+        <div class="topbar-actions">
+          <a class="link" href="/api/admin/export">导出 CSV</a>
+          <button class="link danger" id="cleanup">清理过期数据</button>
+          <button class="link" id="logout">退出</button>
+        </div>
+      </div>
+      <div class="summary" id="summary">加载中…</div>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>日期/时段</th><th>主预约人</th><th>随行人</th><th>人数</th><th>状态</th><th>到场</th><th>操作</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <script src="/static/admin.js"></script>
+</body>
+</html>

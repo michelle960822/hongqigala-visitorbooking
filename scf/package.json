@@ -1,0 +1,14 @@
+{
+  "name": "auto-expo-booking-scf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "hono": "^4.6.0",
+    "mysql2": "^3.11.0"
+  }
+}

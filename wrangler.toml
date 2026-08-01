@@ -1,0 +1,24 @@
+name = "auto-expo-booking"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# 前端静态资源（public/ 目录）
+assets = { directory = "./public", binding = "ASSETS" }
+
+# 普通配置（非密）
+[vars]
+ADMIN_PASSWORD = "404112"
+RETENTION_DAYS = "30"
+REQUIRE_ID = "0"
+CAPACITY = "30"
+PEPPER = "change_me_pepper"
+BASE_URL = ""
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "auto-expo-booking"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+
+# 机密配置（ENCRYPTION_KEY）请改用 secret，不要写在这里：
+#   npx wrangler secret put ENCRYPTION_KEY

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>预约成功</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="card center">
+    <h1 class="ok">预约成功 🎉</h1>
+    <p class="sub">请保存下方二维码，到场出示核销。如无法前来，可随时取消释放名额。</p>
+    <div class="qr" id="qr">二维码生成中…</div>
+    <div class="info" id="info">加载中…</div>
+    <div class="actions">
+      <a class="primary" id="cancelLink" href="#">取消预约</a>
+    </div>
+    <p class="hint">取消后二维码立即失效，名额实时释放。</p>
+  </div>
+  <script src="/static/qrcode.min.js"></script>
+  <script src="/static/success.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>汽车体验活动 · 预约</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="card">
+    <h1>汽车体验活动预约</h1>
+    <p class="sub">请选择日期与时段，填写信息后提交。每人每天限约一个时段，最多可带 2 名随行人。</p>
+    <form id="bookForm">
+      <label>选择日期
+        <select id="date" name="date" required>
+          <option value="">— 请选择 —</option>
+          <option value="2026-08-14">8月14日（周四）</option>
+          <option value="2026-08-15">8月15日（周五）</option>
+        </select>
+      </label>
+      <label>选择时段
+        <select id="slot" name="slot_id" required disabled>
+          <option value="">— 请先选择日期 —</option>
+        </select>
+        <span class="hint" id="slotHint"></span>
+      </label>
+      <label>主预约人姓名
+        <input type="text" name="name" required placeholder="请输入姓名">
+      </label>
+      <label>身份证号（选填）
+        <input type="text" name="booker_id" placeholder="18位身份证号" maxlength="18">
+      </label>
+      <p class="hint" style="margin:-6px 0 14px">实名校验：填写身份证号将自动校验格式与校验位</p>
+      <div class="companions">
+        <div class="comp-head">
+          <span>随行人（最多 2 人，仅填姓名）</span>
+          <button type="button" id="addCompanion" class="link">+ 添加</button>
+        </div>
+        <div id="companionList"></div>
+      </div>
+      <button type="submit" class="primary" id="submit">提交预约</button>
+      <p class="msg" id="msg"></p>
+    </form>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
