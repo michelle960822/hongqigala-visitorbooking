@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>核销</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>核销 · 红旗粉丝家年华</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="card center">
-    <h1 id="title">核销中…</h1>
-    <p class="sub" id="msg">正在校验二维码</p>
-    <a class="link" href="/">返回首页</a>
-    <p style="margin-top:12px"><button class="link" onclick="location.reload()">重新核销</button></p>
-  </div>
+  <header class="appbar">
+    <div class="appbar-left">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <span>现场核销</span>
+      </div>
+    </div>
+    <div class="appbar-right">
+      <a class="appbar-tag" href="/">🏠 返回报名</a>
+      <a class="appbar-tag" href="/admin.html">🔧 后台</a>
+    </div>
+  </header>
+
+  <main class="main" style="margin-top:40px">
+    <div class="card center">
+      <h2 id="title">核销中…</h2>
+      <p class="muted" id="msg">正在校验二维码</p>
+      <div class="info-box" id="info" style="display:none;text-align:left"></div>
+      <div class="row-actions" style="justify-content:center;margin-top:16px">
+        <a class="btn btn-ghost" href="/">返回报名</a>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-stack" id="toastStack"></div>
   <script src="/static/checkin.js"></script>
 </body>
 </html>

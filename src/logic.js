@@ -47,6 +47,38 @@ function newToken() {
   return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
 
+// 6 位数字短码，去重直到成功（最多 20 次）
+async function newShortCode(db) {
+  for (let i = 0; i < 20; i++) {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+    const code = String(n).padStart(6, '0');
+    const hit = await db.first('SELECT 1 AS ok FROM bookings WHERE short_code=?', [code]);
+    if (!hit) return code;
+  }
+  // 极小概率 fallback：用 id 派生
+  const row = await db.first("SELECT IFNULL(MAX(id),0)+1 AS n FROM bookings");
+  return String(Number(row.n) % 1000000).padStart(6, '0');
+}
+
+// 脱敏：姓名保留首字 + *，手机 138****5678，身份证 110105********002X
+export function maskName(s) {
+  if (!s) return '';
+  if (s.length <= 1) return s;
+  return s[0] + '*'.repeat(Math.max(1, s.length - 1));
+}
+export function maskPhone(s) {
+  if (!s) return '';
+  const d = String(s).replace(/\D/g, '');
+  if (d.length < 7) return d;
+  return d.slice(0, 3) + '****' + d.slice(-4);
+}
+export function maskIdNum(s) {
+  if (!s) return '';
+  const d = String(s).replace(/[^\dXx]/g, '').toUpperCase();
+  if (d.length <= 8) return d;
+  return d.slice(0, 6) + '********' + d.slice(-4);
+}
+
 function fail(code, msg, http) {
   return { ok: false, code, msg, http };
 }
@@ -68,16 +100,19 @@ export async function bookingCreate(db, cfg, input) {
   const name = (input.name || '').trim();
   let companions = Array.isArray(input.companions) ? input.companions : [];
   companions = companions.map((c) => String(c).trim()).filter(Boolean);
+  const phone = (input.phone || '').trim();
 
   if (!name) return fail('NAME_REQUIRED', '请填写姓名', 400);
   if (cfg.REQUIRE_ID && !input.booker_id) return fail('ID_REQUIRED', '请填写身份证号', 400);
   const booker_id = (input.booker_id || '').trim();
   if (booker_id && !validId(booker_id)) return fail('ID_INVALID', '身份证号格式或校验位错误', 400);
+  if (phone && !/^1\d{10}$/.test(phone)) return fail('PHONE_INVALID', '请填写正确的 11 位手机号', 400);
   if (companions.length > 2) return fail('TOO_MANY', '随行人最多 2 人', 400);
 
   const party_size = 1 + companions.length;
   const key = booker_id || name;
   const token = newToken();
+  const short_code = await newShortCode(db);
   const now = new Date().toISOString().slice(0, 19);
   const kh = await keyHash(cfg.PEPPER, key);
 
@@ -97,8 +132,8 @@ export async function bookingCreate(db, cfg, input) {
 
   try {
     const ins = await db.run(
-      'INSERT INTO bookings(token, booker_key_hash, booking_date, slot_id, party_size, booker_name_enc, booker_id_enc, created_at) VALUES(?,?,?,?,?,?,?,?)',
-      [token, kh, date, slot_id, party_size, await enc(name), booker_id ? await enc(booker_id) : null, now]
+      'INSERT INTO bookings(token, short_code, booker_key_hash, booking_date, slot_id, party_size, booker_name_enc, booker_id_enc, phone_enc, created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
+      [token, short_code, kh, date, slot_id, party_size, await enc(name), booker_id ? await enc(booker_id) : null, phone ? await enc(phone) : null, now]
     );
     for (const cn of companions) {
       await db.run('INSERT INTO companions(booking_id, name_enc) VALUES(?,?)', [ins.insertId, await enc(cn)]);
@@ -109,7 +144,7 @@ export async function bookingCreate(db, cfg, input) {
     if (isUniqueError(e)) return fail('DUPLICATE', '您今天已预约过该活动', 409);
     throw e;
   }
-  return { ok: true, code: 'OK', token, http: 200 };
+  return { ok: true, code: 'OK', token, short_code, http: 200 };
 }
 
 // ---------- 取消（释放名额） ----------
@@ -123,13 +158,24 @@ export async function bookingCancel(db, cfg, token) {
   return { ok: true, http: 200 };
 }
 
-// ---------- 扫码核销 ----------
-export async function bookingCheckin(db, cfg, token) {
-  const b = await db.first('SELECT * FROM bookings WHERE token=?', [token]);
-  if (!b) return { ok: false, msg: '二维码无效', http: 200 };
-  if (b.status !== 'active') return { ok: false, msg: '该预约已取消，二维码失效', http: 200 };
-  if (b.attended) return { ok: true, msg: '已核销，请勿重复', http: 200 };
-  await db.run('UPDATE bookings SET attended=1 WHERE token=?', [token]);
+// ---------- 扫码核销（支持 token 或 6 位短码） ----------
+export async function bookingCheckin(db, cfg, code) {
+  if (!code) return { ok: false, msg: '请提供核销码', http: 200 };
+  const c = String(code).trim();
+  // 短码（6 位纯数字）
+  if (/^\d{6}$/.test(c)) {
+    const b = await db.first("SELECT * FROM bookings WHERE short_code=?", [c]);
+    return _doCheckin(db, b, c);
+  }
+  const b = await db.first('SELECT * FROM bookings WHERE token=?', [c]);
+  return _doCheckin(db, b, c);
+}
+
+async function _doCheckin(db, b, code) {
+  if (!b) return { ok: false, msg: '核销码无效', http: 200 };
+  if (b.status !== 'active') return { ok: false, msg: '该预约已取消，核销码失效', http: 200 };
+  if (b.attended) return { ok: true, msg: '已核销，请勿重复', http: 200, already: true };
+  await db.run('UPDATE bookings SET attended=1 WHERE token=?', [b.token]);
   return { ok: true, msg: '核销成功，欢迎体验！', http: 200 };
 }
 
@@ -140,9 +186,18 @@ export async function getBookingView(db, token) {
   const slot = await db.first('SELECT * FROM slots WHERE id=?', [b.slot_id]);
   const compRows = await db.all('SELECT name_enc FROM companions WHERE booking_id=?', [b.id]);
   const companions = await Promise.all(compRows.map((r) => dec(r.name_enc)));
+  const nameFull = await dec(b.booker_name_enc);
+  const idFull = b.booker_id_enc ? await dec(b.booker_id_enc) : '';
+  const phoneFull = b.phone_enc ? await dec(b.phone_enc) : '';
   return {
     token,
-    name: await dec(b.booker_name_enc),
+    short_code: b.short_code || '',
+    name: nameFull,
+    name_mask: maskName(nameFull),
+    phone: phoneFull,
+    phone_mask: maskPhone(phoneFull),
+    idnum: idFull,
+    idnum_mask: maskIdNum(idFull),
     party_size: b.party_size,
     date: slot.date,
     start: slot.start_time,
@@ -181,13 +236,21 @@ export async function getDashboard(db) {
   for (const r of rows) {
     const compRows = await db.all('SELECT name_enc FROM companions WHERE booking_id=?', [r.id]);
     const companions = await Promise.all(compRows.map((x) => dec(x.name_enc)));
+    const nameFull = await dec(r.booker_name_enc);
+    const idFull = r.booker_id_enc ? await dec(r.booker_id_enc) : '';
+    const phoneFull = r.phone_enc ? await dec(r.phone_enc) : '';
     out.push({
       id: r.id,
+      short_code: r.short_code || '',
       date: r.date,
       start: r.start_time,
       end: r.end_time,
-      name: await dec(r.booker_name_enc),
-      idnum: r.booker_id_enc ? await dec(r.booker_id_enc) : '',
+      name: nameFull,
+      name_mask: maskName(nameFull),
+      idnum: idFull,
+      idnum_mask: maskIdNum(idFull),
+      phone: phoneFull,
+      phone_mask: maskPhone(phoneFull),
       companions,
       party_size: r.party_size,
       status: r.status,

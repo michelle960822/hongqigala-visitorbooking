@@ -1,26 +1,40 @@
-const token = location.pathname.split('/').pop();
+// 预约成功页
+'use strict';
 
-async function main() {
-  const res = await fetch('/api/booking/' + token);
-  const d = await res.json();
-  if (!d.ok) {
-    document.getElementById('info').textContent = '预约不存在';
-    document.getElementById('qr').textContent = '';
+const $ = (s) => document.querySelector(s);
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+const token = location.pathname.replace(/^\/success\//, '').replace(/\/$/, '').trim();
+if (!token) { $('#iName').textContent = '无效的预约链接'; }
+
+async function load() {
+  const r = await fetch('/api/booking/' + encodeURIComponent(token));
+  if (r.status !== 200) {
+    $('#iName').textContent = '加载失败';
     return;
   }
-  document.getElementById('info').innerHTML = `
-    <p><b>日期：</b> ${d.date}</p>
-    <p><b>时段：</b> ${d.start} - ${d.end}</p>
-    <p><b>主预约人：</b> ${d.name}</p>
-    <p><b>总人数：</b> ${d.party_size} 人（含随行）</p>
-    <p><b>随行人：</b> ${d.companions.length ? d.companions.join('、') : '无'}</p>`;
-
-  const url = location.origin + '/checkin/' + token;
+  const v = await r.json();
+  if (!v || !v.name) { $('#iName').textContent = '预约不存在'; return; }
+  // 二维码（用核销 URL，扫码也能核销）
+  const checkinUrl = location.origin + '/checkin/' + token;
   const qr = qrcode(0, 'M');
-  qr.addData(url);
+  qr.addData(checkinUrl);
   qr.make();
-  document.getElementById('qr').innerHTML = qr.createImgTag(5, 8);
-
-  document.getElementById('cancelLink').href = '/cancel/' + token;
+  $('#qr').innerHTML = qr.createImgTag(6, 8);
+  // 短码
+  const sc = v.short_code || sessionStorage.getItem('shortCode_' + token) || '------';
+  $('#shortCode').textContent = sc;
+  // 详情
+  $('#iName').textContent = v.name + (v.phone ? '（' + v.phone.slice(0,3) + '****' + v.phone.slice(-4) + '）' : '');
+  $('#iDate').textContent = v.date;
+  $('#iSlot').textContent = v.start + '–' + v.end;
+  $('#iParty').textContent = v.party_size + ' 人' + (v.companions && v.companions.length ? '（含随行 ' + v.companions.join('、') + '）' : '');
+  // 取消链接
+  $('#cancelLink').href = '/cancel/' + token;
+  // 标题
+  document.title = '预约成功 · ' + v.date + ' ' + v.start;
 }
-main();
+load();

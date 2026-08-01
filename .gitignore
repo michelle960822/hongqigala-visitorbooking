@@ -14,3 +14,4 @@ scf/node_modules/
 
 # WorkBuddy 本地记忆（含个人工作日志，不要进公开仓库）
 .workbuddy/
+.preview.db

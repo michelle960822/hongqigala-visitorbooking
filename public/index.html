@@ -1,47 +1,101 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>汽车体验活动 · 预约</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>试乘体验预约 · 红旗粉丝家年华</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="card">
-    <h1>汽车体验活动预约</h1>
-    <p class="sub">请选择日期与时段，填写信息后提交。每人每天限约一个时段，最多可带 2 名随行人。</p>
-    <form id="bookForm">
-      <label>选择日期
-        <select id="date" name="date" required>
-          <option value="">— 请选择 —</option>
-          <option value="2026-08-14">8月14日（周四）</option>
-          <option value="2026-08-15">8月15日（周五）</option>
-        </select>
-      </label>
-      <label>选择时段
-        <select id="slot" name="slot_id" required disabled>
-          <option value="">— 请先选择日期 —</option>
-        </select>
-        <span class="hint" id="slotHint"></span>
-      </label>
-      <label>主预约人姓名
-        <input type="text" name="name" required placeholder="请输入姓名">
-      </label>
-      <label>身份证号（选填）
-        <input type="text" name="booker_id" placeholder="18位身份证号" maxlength="18">
-      </label>
-      <p class="hint" style="margin:-6px 0 14px">实名校验：填写身份证号将自动校验格式与校验位</p>
-      <div class="companions">
-        <div class="comp-head">
-          <span>随行人（最多 2 人，仅填姓名）</span>
-          <button type="button" id="addCompanion" class="link">+ 添加</button>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="appbar-left">
+        <div class="brand">
+          <div class="brand-mark">紅</div>
+          <span>红旗粉丝家年华</span>
         </div>
-        <div id="companionList"></div>
       </div>
-      <button type="submit" class="primary" id="submit">提交预约</button>
-      <p class="msg" id="msg"></p>
-    </form>
-  </div>
+      <div class="appbar-right">
+        <a class="appbar-tag" href="/">🏠 报名入口</a>
+        <a class="appbar-tag" href="/admin.html">🔐 工作人员</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>红旗粉丝家年华<span class="dot">·</span>智能科技体验日</h1>
+      <p>试乘体验预约 · 8/14–8/15 限时开放，凭核销码入场</p>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="card">
+      <h2>📅 选择日期与时段</h2>
+      <div class="field">
+        <label>日期 <span class="req">*</span></label>
+        <select id="date" class="select">
+          <option value="2026-08-14">2026-08-14（周五）</option>
+          <option value="2026-08-15">2026-08-15（周六）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>时段 <span class="req">*</span></label>
+        <div class="slot-grid" id="slots"><div class="muted">加载中…</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👤 预约人信息</h2>
+      <div class="row">
+        <div class="field">
+          <label>姓名 <span class="req">*</span></label>
+          <input class="input" id="name" placeholder="请填写真实姓名" maxlength="20" />
+        </div>
+        <div class="field">
+          <label>手机号 <span class="req">*</span></label>
+          <input class="input" id="phone" placeholder="11 位手机号，现场联系用" maxlength="11" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="field">
+        <label>身份证号（选填）</label>
+        <input class="input" id="booker_id" placeholder="选填，如需现场核验请填写" maxlength="18" />
+        <p class="muted" style="margin:6px 0 0;font-size:12px">仅用于实名校验，加密存储；不填也允许预约</p>
+      </div>
+      <div class="field">
+        <label>随行人（最多 2 人）</label>
+        <div class="companion-row">
+          <input class="input" placeholder="随行人 1 姓名（选填）" id="c1" maxlength="20" />
+        </div>
+        <div class="companion-row">
+          <input class="input" placeholder="随行人 2 姓名（选填）" id="c2" maxlength="20" />
+        </div>
+      </div>
+
+      <div class="alert danger">
+        <span class="ico">⏰</span>
+        <div class="body">
+          <div class="title">仅在所选<span class="hl">预约时段</span>内可现场核销</div>
+          <div class="desc">请按时到场，过期作废，名额不释放。</div>
+        </div>
+      </div>
+
+      <!-- PIPL 隐私告知 + 同意勾选 -->
+      <label class="checkbox-row">
+        <input type="checkbox" id="consent" />
+        <span>
+          我已阅读并同意 <a href="#" id="privacyLink">《个人信息处理告知》</a>，授权活动方收集并使用我的姓名、手机号、身份证号（选填）用于本次试乘预约与现场核销。
+          <strong style="color:var(--primary)">活动结束后第 10 天将自动销毁以上所有信息。</strong>
+        </span>
+      </label>
+
+      <button class="btn btn-primary btn-lg btn-block" id="submit">提交预约</button>
+      <p id="msg" class="muted center" style="margin:10px 0 0"></p>
+    </div>
+  </main>
+
+  <div class="toast-stack" id="toastStack"></div>
+
   <script src="/static/app.js"></script>
 </body>
 </html>

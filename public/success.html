@@ -1,22 +1,97 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>预约成功</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>预约成功 · 红旗粉丝家年华</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="card center">
-    <h1 class="ok">预约成功 🎉</h1>
-    <p class="sub">请保存下方二维码，到场出示核销。如无法前来，可随时取消释放名额。</p>
-    <div class="qr" id="qr">二维码生成中…</div>
-    <div class="info" id="info">加载中…</div>
-    <div class="actions">
-      <a class="primary" id="cancelLink" href="#">取消预约</a>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="appbar-left">
+        <div class="brand">
+          <div class="brand-mark">紅</div>
+          <span>预约成功</span>
+        </div>
+      </div>
+      <div class="appbar-right">
+        <a class="appbar-tag" href="/">🏠 返回报名</a>
+      </div>
     </div>
-    <p class="hint">取消后二维码立即失效，名额实时释放。</p>
-  </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>预约成功<span class="dot">·</span>请按时到场</h1>
+      <p>请截图保存下方二维码与 6 位核销码 · 红旗粉丝家年华 · 试乘体验</p>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="alert danger">
+      <span class="ico">📸</span>
+      <div class="body">
+        <div class="title">请立即<span class="hl">截图保存</span>此页面</div>
+        <div class="desc">二维码与 6 位核销码是现场入场凭证，关闭页面后无法再次查看。如需退订，使用页面底部的"取消预约"入口。</div>
+      </div>
+    </div>
+
+    <div class="alert danger">
+      <span class="ico">⏰</span>
+      <div class="body">
+        <div class="title">仅在您所选的<span class="hl">预约时段</span>内可核销</div>
+        <div class="desc">早到或迟到均无法入场，请按下方时间准时到达。</div>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <span class="ico">🔒</span>
+      <div class="body">
+        <div class="title">个人信息保护</div>
+        <div class="desc">您提交的姓名、手机号、身份证号已加密存储。<span class="hl">活动结束后第 10 天将自动销毁</span>，销毁后无法恢复。如需提前删除，可点击"立即销毁我的数据"。</div>
+      </div>
+    </div>
+
+    <div class="card center">
+      <h2 style="justify-content:center">📱 入场二维码</h2>
+      <div class="qr-wrap">
+        <div id="qr" style="background:#f0f0f0;min-width:200px;min-height:200px;display:grid;place-items:center">生成中…</div>
+        <p class="qr-caption">请打开手机相机扫一扫</p>
+      </div>
+
+      <div class="info-box">
+        <dl>
+          <dt>核销码</dt>
+          <dd><span class="shortcode" id="shortCode">------</span></dd>
+          <dt>姓名</dt>
+          <dd id="iName">-</dd>
+          <dt>日期</dt>
+          <dd id="iDate">-</dd>
+          <dt>时段</dt>
+          <dd id="iSlot">-</dd>
+          <dt>总人数</dt>
+          <dd id="iParty">-</dd>
+        </dl>
+      </div>
+
+      <div class="alert success" style="text-align:left">
+        <span class="ico">💡</span>
+        <div class="body">
+          <div class="title">现场如不方便扫码</div>
+          <div class="desc">可让工作人员手动输入上方 <strong>6 位核销码</strong> 完成核销。</div>
+        </div>
+      </div>
+
+      <div class="row-actions" style="justify-content:center">
+        <a class="btn btn-ghost" id="cancelLink" href="#">取消预约</a>
+        <a class="btn btn-primary" href="/">再次预约（他人）</a>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-stack" id="toastStack"></div>
+
   <script src="/static/qrcode.min.js"></script>
   <script src="/static/success.js"></script>
 </body>

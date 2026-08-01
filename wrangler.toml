@@ -8,7 +8,8 @@ assets = { directory = "./public", binding = "ASSETS" }
 # 普通配置（非密）
 [vars]
 ADMIN_PASSWORD = "404112"
-RETENTION_DAYS = "30"
+# 个人信息保护法：活动结束后 10 天自动销毁所有预约信息
+RETENTION_DAYS = "10"
 REQUIRE_ID = "0"
 CAPACITY = "30"
 PEPPER = "change_me_pepper"

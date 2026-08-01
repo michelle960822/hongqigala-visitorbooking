@@ -11,15 +11,18 @@ CREATE TABLE IF NOT EXISTS slots (
 CREATE TABLE IF NOT EXISTS bookings (
   id INT PRIMARY KEY AUTO_INCREMENT,
   token VARCHAR(64) UNIQUE NOT NULL,
+  short_code VARCHAR(8),
   booker_key_hash VARCHAR(128) NOT NULL,
   booking_date VARCHAR(20) NOT NULL,
   slot_id INT NOT NULL,
   party_size INT NOT NULL,
   booker_name_enc TEXT NOT NULL,
   booker_id_enc TEXT,
+  phone_enc TEXT,
   attended INT NOT NULL DEFAULT 0,
   status VARCHAR(20) NOT NULL DEFAULT 'active',
   created_at VARCHAR(25) NOT NULL,
+  UNIQUE KEY uq_short_code (short_code),
   INDEX idx_booker_date (booker_key_hash, booking_date)
 );
 

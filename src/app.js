@@ -34,7 +34,7 @@ export function buildApp({ db, config, assets }) {
     const body = await c.req.json().catch(() => ({}));
     const res = await bookingCreate(db, config, body);
     return c.json(
-      { ok: res.ok, ...(res.token ? { token: res.token } : {}), ...(res.code ? { code: res.code, msg: res.msg } : {}) },
+      { ok: res.ok, ...(res.token ? { token: res.token } : {}), ...(res.short_code ? { short_code: res.short_code } : {}), msg: res.msg || '' },
       res.http
     );
   });
@@ -52,9 +52,48 @@ export function buildApp({ db, config, assets }) {
     return c.json(res, res.http);
   });
 
-  // 扫码核销
-  app.post('/api/checkin/:token', async (c) => {
-    const res = await bookingCheckin(db, config, c.req.param('token'));
+  // 立即销毁：取消预约 + 立刻删除所有字段（满足 PIPL "提前删除"诉求）
+  app.post('/api/erase/:token', async (c) => {
+    const token = c.req.param('token');
+    const b = await db.first('SELECT * FROM bookings WHERE token=?', [token]);
+    if (!b) return c.json({ ok: true, msg: '记录不存在或已删除' });
+    if (b.status === 'active') {
+      await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
+    }
+    await db.run('DELETE FROM companions WHERE booking_id=?', [b.id]);
+    await db.run("UPDATE bookings SET status='cancelled', booker_name_enc='', booker_id_enc='', phone_enc='' WHERE token=?", [token]);
+    return c.json({ ok: true, msg: '已立即销毁您的所有个人信息' });
+  });
+
+  // 扫码核销（支持 6 位短码或完整 token）
+  app.post('/api/checkin/:code', async (c) => {
+    const res = await bookingCheckin(db, config, c.req.param('code'));
+    // 成功时附带脱敏详情供前端展示
+    if (res.ok) {
+      const code = c.req.param('code');
+      let b = null;
+      if (/^\d{6}$/.test(code)) {
+        b = await db.first('SELECT * FROM bookings WHERE short_code=?', [code]);
+      } else {
+        b = await db.first('SELECT * FROM bookings WHERE token=?', [code]);
+      }
+      if (b) {
+        const slot = await db.first('SELECT * FROM slots WHERE id=?', [b.slot_id]);
+        const { maskName, maskPhone, maskIdNum } = await import('./logic.js');
+        const { enc, dec } = await import('./crypto.js');
+        const nameFull = await dec(b.booker_name_enc);
+        const idFull = b.booker_id_enc ? await dec(b.booker_id_enc) : '';
+        const phoneFull = b.phone_enc ? await dec(b.phone_enc) : '';
+        res.booking = {
+          short_code: b.short_code,
+          name: nameFull, name_mask: maskName(nameFull),
+          phone: phoneFull, phone_mask: maskPhone(phoneFull),
+          idnum: idFull, idnum_mask: maskIdNum(idFull),
+          party_size: b.party_size,
+          date: slot.date, start: slot.start_time, end: slot.end_time,
+        };
+      }
+    }
     return c.json(res, res.http);
   });
 
@@ -67,6 +106,13 @@ export function buildApp({ db, config, assets }) {
     return c.json({ ok: true });
   });
 
+  // 管理员登录态查询
+  app.get('/api/admin/me', async (c) => {
+    const sid = getCookie(c, 'sid');
+    if (await adminAuth(db, sid)) return c.json({ ok: true });
+    return c.json({ ok: false }, 401);
+  });
+
   // 管理员鉴权中间件
   const requireAdmin = async (c, next) => {
     const sid = getCookie(c, 'sid');
@@ -74,10 +120,38 @@ export function buildApp({ db, config, assets }) {
     await next();
   };
 
-  // 后台数据
+  // 后台数据（带日期/状态过滤，返回 list 字段以兼容旧版）
   app.get('/api/admin/dashboard', requireAdmin, async (c) => {
-    const rows = await getDashboard(db);
-    return c.json({ ok: true, rows });
+    const date = c.req.query('date');
+    const status = c.req.query('status');
+    let list = await getDashboard(db);
+    if (date) list = list.filter((x) => x.date === date);
+    if (status === 'active') list = list.filter((x) => x.status === 'active' && !x.attended);
+    else if (status === 'attended') list = list.filter((x) => x.attended);
+    else if (status === 'cancelled') list = list.filter((x) => x.status !== 'active');
+    return c.json({ ok: true, list });
+  });
+
+  // 今日核销流水（按 attended 倒序）
+  app.get('/api/admin/flow', requireAdmin, async (c) => {
+    const { maskName, maskPhone, maskIdNum } = await import('./logic.js');
+    const { dec } = await import('./crypto.js');
+    const rows = await db.all("SELECT * FROM bookings WHERE attended=1 ORDER BY id DESC LIMIT 50");
+    const out = await Promise.all(rows.map(async (r) => {
+      const slot = await db.first('SELECT * FROM slots WHERE id=?', [r.slot_id]);
+      const nameFull = await dec(r.booker_name_enc);
+      const idFull = r.booker_id_enc ? await dec(r.booker_id_enc) : '';
+      const phoneFull = r.phone_enc ? await dec(r.phone_enc) : '';
+      return {
+        time: r.created_at,
+        short_code: r.short_code,
+        name_mask: maskName(nameFull),
+        idnum_mask: maskIdNum(idFull),
+        phone_mask: maskPhone(phoneFull),
+        date: slot.date, start: slot.start_time, end: slot.end_time,
+      };
+    }));
+    return c.json({ ok: true, list: out });
   });
 
   // 导出 CSV
@@ -92,6 +166,17 @@ export function buildApp({ db, config, assets }) {
   // 标记到场
   app.post('/api/admin/checkin/:id', requireAdmin, async (c) => {
     await markAttended(db, c.req.param('id'));
+    return c.json({ ok: true });
+  });
+
+  // 管理员取消预约（释放名额）
+  app.post('/api/admin/cancel/:id', requireAdmin, async (c) => {
+    const id = c.req.param('id');
+    const b = await db.first("SELECT * FROM bookings WHERE id=? AND status='active'", [id]);
+    if (b) {
+      await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
+      await db.run("UPDATE bookings SET status='cancelled' WHERE id=?", [id]);
+    }
     return c.json({ ok: true });
   });
 
