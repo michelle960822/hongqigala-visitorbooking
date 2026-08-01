@@ -11,3 +11,6 @@ scf/node_modules/
 .wrangler/
 .DS_Store
 *.log
+
+# WorkBuddy 本地记忆（含个人工作日志，不要进公开仓库）
+.workbuddy/

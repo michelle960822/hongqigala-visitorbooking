@@ -84,6 +84,40 @@ npx wrangler deploy
 
 ---
 
+## 通过 GitHub 自动同步到 Cloudflare（推荐工作流）
+
+把代码放进 GitHub 之后，**每次 push 都会自动部署到 Cloudflare**，不用再手动跑命令。仓库里已预置了流水线文件 `.github/workflows/deploy-cloudflare.yml`。
+
+### 一次性准备（约 5 分钟）
+
+1. **在 github.com 新建一个空仓库**（不要勾选 README / .gitignore，保持全空）。
+2. **推送代码**（你给我 GitHub 秘钥后，我可以直接帮你推；或你自己执行）：
+   ```bash
+   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+   git push -u origin main
+   ```
+3. **在 GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret 添加三个机密**：
+   | 名称 | 内容 |
+   |------|------|
+   | `CLOUDFLARE_API_TOKEN` | Cloudflare 的 API Token（权限勾 **Workers Scripts Edit** + **D1 Edit**） |
+   | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 控制台右侧的账户 ID |
+   | `ENCRYPTION_KEY` | 32 字节随机 base64：<br>`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+   > 可选：`ADMIN_PASSWORD`、`PEPPER`（不填则用 `wrangler.toml` 默认值）。
+4. **D1 数据库仍需本地建一次**（流水线只同步代码，不创建数据库）：
+   ```bash
+   npx wrangler d1 create auto-expo-booking
+   # 把返回的 database_id 填进 wrangler.toml 的 database_id = "..."
+   npx wrangler d1 migrations apply auto-expo-booking
+   ```
+
+### 之后怎么用
+
+- **你改了需求 → 告诉我 → 我改完代码 push → GitHub Actions 自动部署**，几十秒后线上就更新了。全程不用你碰命令行。
+- 也可以在 GitHub 仓库 **Actions** 页面手动点 **Run workflow** 触发重部署。
+- 安全提示：`.env` 和 `.workbuddy/` 已在 `.gitignore` 中，**不会被推到公开仓库**；所有密钥都走 GitHub Secrets / Cloudflare Secrets，不进代码。
+
+---
+
 ## 部署到腾讯云 CloudBase（云托管 + MySQL）
 
 同一套业务逻辑，仅数据库适配换成 MySQL。
