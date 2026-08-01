@@ -7,43 +7,24 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="appbar">
-    <div class="appbar-inner">
-      <div class="appbar-left">
-        <div class="brand">
-          <div class="brand-mark">紅</div>
-          <span>取消预约</span>
-        </div>
-      </div>
-      <div class="appbar-right">
-        <a class="appbar-tag" href="/">🏠 返回报名</a>
-      </div>
-    </div>
-  </header>
-
   <section class="hero">
-    <div class="hero-inner">
-      <h1>取消预约<span class="dot">·</span>释放名额</h1>
-      <p>取消后名额将实时释放给其他用户，二维码立即失效</p>
+    <div class="hero-inner" style="text-align:center">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:10px">
+        <a class="appbar-tag" href="/" style="background:rgba(255,255,255,.2);color:#fff">🏠 返回报名</a>
+      </div>
+      <h1 style="font-size:22px">取消预约</h1>
     </div>
   </section>
 
   <main class="main">
     <div class="card center">
-      <h2 style="justify-content:center">⚠️ 确认取消</h2>
       <div class="info-box" id="info"><div class="muted">加载中…</div></div>
-      <div class="row-actions" style="justify-content:center" id="actions">
-        <a class="btn btn-ghost" id="backBtn" href="/">再想想</a>
-        <button class="btn btn-danger" id="confirmBtn">确认取消（保留 10 天后销毁）</button>
+      <div id="actions">
+        <button class="btn btn-danger btn-block" id="confirmBtn" style="font-size:15px;padding:14px">
+          🗑 立即删除我的报名信息
+        </button>
+        <p style="margin:12px 0 0"><a class="btn btn-ghost btn-sm" id="backBtn" href="/">返回</a></p>
       </div>
-      <div class="alert info" style="text-align:left;margin-top:18px">
-        <span class="ico">🔒</span>
-        <div class="body">
-          <div class="title">想立即删除我的所有数据？</div>
-          <div class="desc">如您希望<span class="hl">立即销毁</span>您提交的所有个人信息（不留存至 10 天），可点击下方按钮。<strong>此操作不可恢复。</strong></div>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="eraseBtn" style="margin-top:8px">🗑 立即销毁我的所有数据</button>
     </div>
   </main>
 

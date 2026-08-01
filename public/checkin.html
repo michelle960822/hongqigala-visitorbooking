@@ -7,23 +7,20 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="appbar">
-    <div class="appbar-left">
-      <div class="brand">
-        <div class="brand-mark">A</div>
-        <span>现场核销</span>
+  <section class="hero" style="padding:22px 20px 60px">
+    <div class="hero-inner" style="text-align:center">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:12px">
+        <a class="appbar-tag" href="/" style="background:rgba(255,255,255,.18);color:#fff">🏠 返回报名</a>
+        <a class="appbar-tag" href="/admin.html" style="background:rgba(255,255,255,.18);color:#fff">🔧 后台</a>
       </div>
+      <h1 style="font-size:22px">扫码核销</h1>
     </div>
-    <div class="appbar-right">
-      <a class="appbar-tag" href="/">🏠 返回报名</a>
-      <a class="appbar-tag" href="/admin.html">🔧 后台</a>
-    </div>
-  </header>
+  </section>
 
-  <main class="main" style="margin-top:40px">
+  <main class="main" style="margin-top:-36px">
     <div class="card center">
-      <h2 id="title">核销中…</h2>
-      <p class="muted" id="msg">正在校验二维码</p>
+      <h2 id="title" style="justify-content:center">核销中…</h2>
+      <p class="muted" id="msg" style="font-size:15px">正在校验二维码</p>
       <div class="info-box" id="info" style="display:none;text-align:left"></div>
       <div class="row-actions" style="justify-content:center;margin-top:16px">
         <a class="btn btn-ghost" href="/">返回报名</a>

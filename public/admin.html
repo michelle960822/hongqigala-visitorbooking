@@ -7,38 +7,23 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="appbar">
-    <div class="appbar-inner">
-      <div class="appbar-left">
-        <div class="brand">
-          <div class="brand-mark">紅</div>
-          <span>工作人员后台</span>
-        </div>
+  <section class="hero" style="padding:22px 20px 90px">
+    <div class="hero-inner" style="text-align:center">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:12px">
+        <span class="appbar-tag" id="loginTag" style="display:none;background:rgba(255,255,255,.18);color:#fff">✅ 已登录</span>
+        <a class="appbar-tag" href="/" style="background:rgba(255,255,255,.18);color:#fff">🏠 返回报名</a>
+        <button class="appbar-tag" id="logoutBtn" style="display:none;background:rgba(255,255,255,.18);color:#fff;border:none;cursor:pointer;font:inherit">退出</button>
       </div>
-      <div class="appbar-right">
-        <span class="appbar-tag" id="loginTag" style="display:none">✅ 已登录</span>
-        <a class="appbar-tag" href="/">🏠 返回报名</a>
-        <button class="appbar-tag" id="logoutBtn" style="display:none">退出</button>
-      </div>
-    </div>
-  </header>
-
-  <section class="hero">
-    <div class="hero-inner">
-      <h1>红旗粉丝家年华<span class="dot">·</span>现场核销后台</h1>
-      <p>智能科技体验日 · 试乘预约核销 · 工作人员专用</p>
+      <h1 style="font-size:22px">红旗粉丝家年华<span class="dot">·</span>现场核销后台</h1>
+      <p>智能科技体验日 · 试乘预约核销</p>
     </div>
   </section>
 
   <main class="main" id="main">
     <div class="card center" id="loginCard">
       <h2 style="justify-content:center">🔐 工作人员登录</h2>
-      <p class="muted" style="margin:0 0 16px">请输入工作人员密码进入后台</p>
       <form id="loginForm" style="max-width:320px;margin:0 auto">
-        <div class="field" style="text-align:left">
-          <label>密码</label>
-          <input class="input" id="pwd" type="password" placeholder="请输入密码" autocomplete="current-password" />
-        </div>
+        <div class="field"><label>密码</label><input class="input" id="pwd" type="password" placeholder="请输入密码" autocomplete="current-password" /></div>
         <button class="btn btn-primary btn-block" type="submit">登录</button>
         <p id="loginMsg" class="muted" style="margin:10px 0 0;min-height:20px"></p>
       </form>
@@ -54,13 +39,6 @@
       <div class="tab-pane active" data-pane="scan">
         <div class="card">
           <h2>📷 扫码核销</h2>
-          <div class="alert info" style="margin:0 0 12px">
-            <span class="ico">💡</span>
-            <div class="body">
-              <div class="title">提示</div>
-              <div class="desc">建议使用手机浏览器扫码（前置摄像头更顺手）。如无摄像头，请直接用下方<span class="hl">手动输入 6 位核销码</span>。</div>
-            </div>
-          </div>
           <div class="scan-card" id="scanCard">
             <span class="placeholder">📷</span>
             <video id="scanVideo" autoplay playsinline muted style="display:none"></video>
@@ -74,98 +52,41 @@
           <div class="field" id="manualBox" style="display:none;margin-top:12px">
             <label>手动输入 6 位核销码 / 完整链接</label>
             <div class="companion-row">
-              <input class="input" id="manualInput" placeholder="例如 482931 或完整 URL" maxlength="64" autocomplete="off" />
+              <input class="input" id="manualInput" placeholder="例如 482931" maxlength="64" autocomplete="off" />
               <button class="btn btn-primary" id="manualBtn">核销</button>
             </div>
           </div>
         </div>
-
-        <div class="card" id="resultCard" style="display:none">
-          <h2>✅ 最近核销</h2>
-          <div id="resultBody"></div>
-        </div>
-
+        <div class="card" id="resultCard" style="display:none"><h2>✅ 最近核销</h2><div id="resultBody"></div></div>
         <div class="card">
           <h2>📜 今日核销流水</h2>
-          <div class="table-scroll">
-            <table class="table" id="flowTable">
-              <thead>
-                <tr>
-                  <th>时间</th>
-                  <th>姓名</th>
-                  <th>手机</th>
-                  <th>身份证</th>
-                  <th>短码</th>
-                  <th>时段</th>
-                </tr>
-              </thead>
-              <tbody id="flowBody">
-                <tr><td colspan="6" class="muted center" style="padding:30px">暂无核销记录</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="table-scroll"><table class="table"><thead><tr><th>时间</th><th>姓名</th><th>手机</th><th>身份证</th><th>短码</th><th>时段</th></tr></thead><tbody id="flowBody"><tr><td colspan="6" class="muted center" style="padding:30px">暂无核销记录</td></tr></tbody></table></div>
         </div>
       </div>
 
       <div class="tab-pane" data-pane="manage">
         <div class="card">
           <h2>📊 报名管理</h2>
-          <div style="background:#f7f7f9;border-radius:6px;padding:8px 12px;font-size:12px;color:#8b94a6;margin:0 0 12px;line-height:1.5">
-            🔒 为保护个人信息，手机号与身份证号已脱敏显示。如需完整数据，请使用"导出 CSV"。
-          </div>
-          <div class="field" style="margin-bottom:10px">
-            <input class="input" id="manageSearch" placeholder="🔍 搜索：姓名 / 手机尾号 / 核销码" autocomplete="off" style="font-size:13px" />
-          </div>
+          <div style="background:#f7f7f9;border-radius:6px;padding:8px 12px;font-size:12px;color:#8b94a6;margin:0 0 12px;line-height:1.5">🔒 为保护个人信息，手机号与身份证号已脱敏显示。</div>
+          <div class="field" style="margin-bottom:10px"><input class="input" id="manageSearch" placeholder="🔍 搜索：姓名 / 手机尾号 / 核销码" autocomplete="off" style="font-size:13px" /></div>
           <div class="row-actions" style="margin-bottom:12px">
-            <select class="select" id="manageDate" style="max-width:200px">
-              <option value="">全部日期</option>
-              <option value="2026-08-14">2026-08-14</option>
-              <option value="2026-08-15">2026-08-15</option>
-            </select>
-            <select class="select" id="manageStatus" style="max-width:160px">
-              <option value="all">全部状态</option>
-              <option value="active">已预约</option>
-              <option value="attended">已到场</option>
-              <option value="cancelled">已取消</option>
-            </select>
+            <select class="select" id="manageDate" style="max-width:180px"><option value="">全部日期</option><option value="2026-08-14">2026-08-14</option><option value="2026-08-15">2026-08-15</option></select>
+            <select class="select" id="manageStatus" style="max-width:150px"><option value="all">全部状态</option><option value="active">已预约</option><option value="attended">已到场</option><option value="cancelled">已取消</option></select>
             <button class="btn btn-ghost btn-sm" id="refreshManageBtn">🔄 刷新</button>
             <a class="btn btn-ghost btn-sm" href="/api/admin/export" id="exportBtn">📥 导出 CSV</a>
-            <button class="btn btn-ghost btn-sm" id="cleanupBtn">🗑 清理过期数据</button>
+            <button class="btn btn-ghost btn-sm" id="cleanupBtn">🗑 清理过期</button>
           </div>
-          <div class="table-scroll">
-            <table class="table" id="manageTable">
-              <thead>
-                <tr>
-                  <th>短码</th>
-                  <th>姓名</th>
-                  <th>手机</th>
-                  <th>身份证</th>
-                  <th>随行</th>
-                  <th>日期 / 时段</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="manageBody">
-                <tr><td colspan="8" class="muted center" style="padding:30px">加载中…</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="table-scroll"><table class="table"><thead><tr><th>短码</th><th>姓名</th><th>手机</th><th>身份证</th><th>随行</th><th>日期/时段</th><th>状态</th><th>操作</th></tr></thead><tbody id="manageBody"><tr><td colspan="8" class="muted center" style="padding:30px">加载中…</td></tr></tbody></table></div>
         </div>
       </div>
 
       <div class="tab-pane" data-pane="board">
-        <div class="card">
-          <h2>📈 实时看板</h2>
-          <div class="stat-grid" id="statGrid"></div>
-          <div id="slotBoard"></div>
-        </div>
+        <div class="card"><h2>📈 实时看板</h2><div class="stat-grid" id="statGrid"></div><div id="slotBoard"></div></div>
       </div>
     </div>
   </main>
 
   <div class="toast-stack" id="toastStack"></div>
-
   <script src="/static/jsQR.js"></script>
   <script src="/static/admin.js"></script>
 </body>

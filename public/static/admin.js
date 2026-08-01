@@ -123,17 +123,16 @@ async function startScan() {
     return;
   }
   try {
-    // 优先后置（手机扫码），失败则前置（笔记本/PC），再失败则任意
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
-      audio: false,
-    }).catch(() => navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user' },
-      audio: false,
-    })).catch(() => navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false,
-    }));
+    // 三级降级：手机后置 → 前置(PC/Mac) → 任意摄像头
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } }, audio: false });
+    } catch (_) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      } catch (__) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+    }
     const v = $('#scanVideo');
     v.srcObject = stream;
     v.style.display = '';

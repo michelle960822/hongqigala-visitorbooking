@@ -7,33 +7,19 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <!-- confetti canvas -->
   <canvas id="confetti" style="position:fixed;inset:0;z-index:200;pointer-events:none"></canvas>
 
-  <header class="appbar">
-    <div class="appbar-inner">
-      <div class="appbar-left">
-        <div class="brand">
-          <div class="brand-mark">紅</div>
-          <span>预约成功</span>
-        </div>
-      </div>
-      <div class="appbar-right">
-        <a class="appbar-tag" href="/">🏠 返回报名</a>
-      </div>
-    </div>
-  </header>
-
-  <section class="hero" style="padding:18px 20px 50px">
+  <section class="hero" style="padding:22px 20px 60px">
     <div class="hero-inner" style="text-align:center">
-      <h1 style="font-size:20px">🎉 预约成功</h1>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:12px">
+        <a class="appbar-tag" href="/" style="background:rgba(255,255,255,.18);color:#fff">🏠 返回报名</a>
+      </div>
+      <h1 style="font-size:22px">🎉 预约成功</h1>
     </div>
   </section>
 
   <main class="main" style="margin-top:-36px">
     <div class="card center" style="padding:16px 18px">
-
-      <!-- 截图提示（醒目版） -->
       <div style="text-align:center;margin-bottom:14px;padding:14px 0 0">
         <div style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff3cd,#ffe7a0);border:2px solid #f5c518;border-radius:10px;padding:10px 18px;box-shadow:0 2px 12px rgba(200,16,46,.15)">
           <span style="font-size:28px">📸</span>
@@ -44,24 +30,17 @@
         </div>
       </div>
 
-      <!-- 二维码 -->
       <div class="qr-wrap" style="padding:10px;margin:0 auto 10px;max-width:180px">
         <div id="qr" style="min-width:140px;min-height:140px;display:grid;place-items:center;font-size:13px;color:#999">生成中…</div>
       </div>
 
-      <!-- 核销码 + 详情 -->
       <div class="info-box" style="margin:10px 0;padding:10px 14px">
         <dl style="grid-template-columns:60px 1fr;font-size:13px;gap:4px 10px">
-          <dt>核销码</dt>
-          <dd><span class="shortcode" id="shortCode" style="font-size:18px;padding:3px 12px">------</span></dd>
-          <dt>姓名</dt>
-          <dd id="iName">-</dd>
-          <dt>日期</dt>
-          <dd id="iDate">-</dd>
-          <dt>时段</dt>
-          <dd id="iSlot">-</dd>
-          <dt>人数</dt>
-          <dd id="iParty">-</dd>
+          <dt>核销码</dt><dd><span class="shortcode" id="shortCode" style="font-size:18px;padding:3px 12px">------</span></dd>
+          <dt>姓名</dt><dd id="iName">-</dd>
+          <dt>日期</dt><dd id="iDate">-</dd>
+          <dt>时段</dt><dd id="iSlot">-</dd>
+          <dt>人数</dt><dd id="iParty">-</dd>
         </dl>
       </div>
 
@@ -73,7 +52,6 @@
   </main>
 
   <div class="toast-stack" id="toastStack"></div>
-
   <script src="/static/qrcode.min.js"></script>
   <script src="/static/success.js"></script>
 </body>
