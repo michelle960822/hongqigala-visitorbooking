@@ -140,15 +140,19 @@ async function startScan() {
     const name = (e && e.name) || '';
     let hint;
     if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || /device not found/i.test(e.message || '')) {
-      hint = '当前设备未检测到摄像头。请直接点击下方"⌨ 手动输入"输入 6 位核销码完成核销。';
+      hint = '当前设备未检测到摄像头。请直接使用下方"手动输入 6 位核销码"完成核销。';
     } else if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-      hint = '摄像头权限被拒绝。请在浏览器地址栏左侧的锁图标中允许摄像头权限，然后刷新。';
+      hint = '摄像头权限被拒绝。请在浏览器地址栏左侧的锁图标中允许摄像头权限，然后刷新页面重试。';
     } else if (name === 'NotReadableError' || name === 'TrackStartError') {
       hint = '摄像头被其他程序占用。请关闭视频会议等应用后重试。';
     } else {
       hint = '请直接使用下方"手动输入 6 位核销码"完成核销。';
     }
     toast({ type: 'danger', title: '摄像头启动失败', sub: hint, duration: 7000 });
+    // 自动切到手动输入模式
+    $('#startScanBtn').style.display = 'none';
+    $('#manualBox').style.display = '';
+    $('#manualInput').focus();
   }
 }
 
@@ -289,13 +293,26 @@ async function refreshManage() {
   if (status && status !== 'all') params.set('status', status);
   const r = await api('/api/admin/dashboard' + (params.toString() ? '?' + params : ''));
   if (r.status !== 200 || !r.data || !r.data.ok) return;
-  const list = r.data.list || [];
+  _lastManageList = r.data.list || [];
+  renderManageTable(_lastManageList);
+}
+function renderManageTable(list) {
+  const q = ($('#manageSearch').value || '').trim().toLowerCase();
+  let filtered = list;
+  if (q) {
+    filtered = list.filter((x) =>
+      (x.short_code || '').includes(q) ||
+      (x.name || '').toLowerCase().includes(q) ||
+      (x.phone || '').includes(q.replace(/\*/g, '')) ||
+      (x.phone_mask || '').includes(q)
+    );
+  }
   const body = $('#manageBody');
-  if (list.length === 0) {
-    body.innerHTML = '<tr><td colspan="8" class="muted center" style="padding:30px">暂无报名记录</td></tr>';
+  if (filtered.length === 0) {
+    body.innerHTML = '<tr><td colspan="8" class="muted center" style="padding:30px">' + (q ? '无匹配结果' : '暂无报名记录') + '</td></tr>';
     return;
   }
-  body.innerHTML = list.map((x) => {
+  body.innerHTML = filtered.map((x) => {
     const stBadge = x.status !== 'active'
       ? '<span class="badge danger">已取消</span>'
       : x.attended
@@ -347,6 +364,9 @@ async function doAdminCancel(id) {
 $('#refreshManageBtn').addEventListener('click', refreshManage);
 $('#manageDate').addEventListener('change', refreshManage);
 $('#manageStatus').addEventListener('change', refreshManage);
+// 搜索：实时过滤
+let _lastManageList = [];
+$('#manageSearch').addEventListener('input', () => renderManageTable(_lastManageList));
 $('#cleanupBtn').addEventListener('click', async () => {
   if (!confirm('确认清理活动结束后 10 天的过期数据？此操作不可恢复，将永久删除姓名/手机/身份证/预约记录。')) return;
   const r = await api('/api/admin/cleanup', { method: 'POST' });

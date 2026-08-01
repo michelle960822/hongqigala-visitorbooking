@@ -24,7 +24,7 @@ async function loadSlots() {
   const date = $('#date').value;
   const r = await fetch('/api/slots?date=' + date);
   const data = await r.json();
-  slots = (data && data.slots) || [];
+  slots = Array.isArray(data) ? data : [];
   renderSlots();
 }
 

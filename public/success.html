@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
+  <!-- confetti canvas -->
+  <canvas id="confetti" style="position:fixed;inset:0;z-index:200;pointer-events:none"></canvas>
+
   <header class="appbar">
     <div class="appbar-inner">
       <div class="appbar-left">
@@ -21,71 +24,50 @@
     </div>
   </header>
 
-  <section class="hero">
+  <section class="hero" style="padding:18px 20px 50px">
     <div class="hero-inner">
-      <h1>预约成功<span class="dot">·</span>请按时到场</h1>
-      <p>请截图保存下方二维码与 6 位核销码 · 红旗粉丝家年华 · 试乘体验</p>
+      <h1 style="font-size:20px">🎉 预约成功</h1>
     </div>
   </section>
 
-  <main class="main">
-    <div class="alert danger">
-      <span class="ico">📸</span>
-      <div class="body">
-        <div class="title">请立即<span class="hl">截图保存</span>此页面</div>
-        <div class="desc">二维码与 6 位核销码是现场入场凭证，关闭页面后无法再次查看。如需退订，使用页面底部的"取消预约"入口。</div>
-      </div>
-    </div>
+  <main class="main" style="margin-top:-36px">
+    <div class="card center" style="padding:16px 18px">
 
-    <div class="alert danger">
-      <span class="ico">⏰</span>
-      <div class="body">
-        <div class="title">仅在您所选的<span class="hl">预约时段</span>内可核销</div>
-        <div class="desc">早到或迟到均无法入场，请按下方时间准时到达。</div>
-      </div>
-    </div>
-
-    <div class="alert info">
-      <span class="ico">🔒</span>
-      <div class="body">
-        <div class="title">个人信息保护</div>
-        <div class="desc">您提交的姓名、手机号、身份证号已加密存储。<span class="hl">活动结束后第 10 天将自动销毁</span>，销毁后无法恢复。如需提前删除，可点击"立即销毁我的数据"。</div>
-      </div>
-    </div>
-
-    <div class="card center">
-      <h2 style="justify-content:center">📱 入场二维码</h2>
-      <div class="qr-wrap">
-        <div id="qr" style="background:#f0f0f0;min-width:200px;min-height:200px;display:grid;place-items:center">生成中…</div>
-        <p class="qr-caption">请打开手机相机扫一扫</p>
+      <!-- 截图提示（醒目版） -->
+      <div style="text-align:center;margin-bottom:14px;padding:14px 0 0">
+        <div style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff3cd,#ffe7a0);border:2px solid #f5c518;border-radius:10px;padding:10px 18px;box-shadow:0 2px 12px rgba(200,16,46,.15)">
+          <span style="font-size:28px">📸</span>
+          <div style="text-align:left;line-height:1.5">
+            <b style="font-size:16px;color:#6b3a05">请立即截图保存</b><br>
+            <span style="font-size:13px;color:#7a6218">仅在所选<span style="font-weight:700;color:#b45309">预约时段</span>内可核销</span>
+          </div>
+        </div>
       </div>
 
-      <div class="info-box">
-        <dl>
+      <!-- 二维码 -->
+      <div class="qr-wrap" style="padding:10px;margin:0 auto 10px;max-width:180px">
+        <div id="qr" style="min-width:140px;min-height:140px;display:grid;place-items:center;font-size:13px;color:#999">生成中…</div>
+      </div>
+
+      <!-- 核销码 + 详情 -->
+      <div class="info-box" style="margin:10px 0;padding:10px 14px">
+        <dl style="grid-template-columns:60px 1fr;font-size:13px;gap:4px 10px">
           <dt>核销码</dt>
-          <dd><span class="shortcode" id="shortCode">------</span></dd>
+          <dd><span class="shortcode" id="shortCode" style="font-size:18px;padding:3px 12px">------</span></dd>
           <dt>姓名</dt>
           <dd id="iName">-</dd>
           <dt>日期</dt>
           <dd id="iDate">-</dd>
           <dt>时段</dt>
           <dd id="iSlot">-</dd>
-          <dt>总人数</dt>
+          <dt>人数</dt>
           <dd id="iParty">-</dd>
         </dl>
       </div>
 
-      <div class="alert success" style="text-align:left">
-        <span class="ico">💡</span>
-        <div class="body">
-          <div class="title">现场如不方便扫码</div>
-          <div class="desc">可让工作人员手动输入上方 <strong>6 位核销码</strong> 完成核销。</div>
-        </div>
-      </div>
-
-      <div class="row-actions" style="justify-content:center">
-        <a class="btn btn-ghost" id="cancelLink" href="#">取消预约</a>
-        <a class="btn btn-primary" href="/">再次预约（他人）</a>
+      <div class="row-actions" style="justify-content:center;gap:8px">
+        <a class="btn btn-ghost btn-sm" id="cancelLink" href="#">取消预约</a>
+        <a class="btn btn-primary btn-sm" href="/">再次预约</a>
       </div>
     </div>
   </main>
