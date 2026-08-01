@@ -18,6 +18,7 @@ import { dec } from './src/crypto.js';
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXY=';
 process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '404112';
 process.env.PEPPER = process.env.PEPPER || 'preview_pepper';
+process.env.REQUIRE_ID = process.env.REQUIRE_ID || '1';
 
 const ROOT = join(process.cwd(), 'public');
 // preview 用本地 db（项目根 .preview.db），方便清理与排查

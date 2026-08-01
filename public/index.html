@@ -58,9 +58,9 @@
         </div>
       </div>
       <div class="field">
-        <label>身份证号（选填）</label>
-        <input class="input" id="booker_id" placeholder="选填，如需现场核验请填写" maxlength="18" />
-        <p class="muted" style="margin:6px 0 0;font-size:12px">仅用于实名校验，加密存储；不填也允许预约</p>
+        <label>身份证号 <span class="req">*</span></label>
+        <input class="input" id="booker_id" placeholder="18 位身份证号，用于现场身份核验" maxlength="18" />
+        <p class="muted" style="margin:6px 0 0;font-size:12px">加密存储，仅用于本次活动现场身份核验，活动结束后第 10 天自动销毁。</p>
       </div>
       <div class="field">
         <label>随行人（最多 2 人）</label>
@@ -80,13 +80,19 @@
         </div>
       </div>
 
-      <!-- PIPL 隐私告知 + 同意勾选 -->
+      <!-- 隐私告知 + 同意勾选 -->
+      <div class="alert info" style="margin:12px 0;text-align:left">
+        <span class="ico">🔒</span>
+        <div class="body">
+          <div class="title">个人信息处理说明</div>
+          <div class="desc">
+            您的姓名、手机号、身份证号将<b>加密存储</b>，<span class="hl">仅用于本次试乘预约与现场核销</span>，不作其他用途。活动结束后<span class="hl">第 10 天自动销毁</span>所有信息。提交即表示您已阅读并同意上述信息处理方式。
+          </div>
+        </div>
+      </div>
       <label class="checkbox-row">
         <input type="checkbox" id="consent" />
-        <span>
-          我已阅读并同意 <a href="#" id="privacyLink">《个人信息处理告知》</a>，授权活动方收集并使用我的姓名、手机号、身份证号（选填）用于本次试乘预约与现场核销。
-          <strong style="color:var(--primary)">活动结束后第 10 天将自动销毁以上所有信息。</strong>
-        </span>
+        <span>我已阅读并同意上述个人信息处理说明</span>
       </label>
 
       <button class="btn btn-primary btn-lg btn-block" id="submit">提交预约</button>

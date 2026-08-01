@@ -70,8 +70,9 @@ $('#submit').addEventListener('click', async () => {
   if (!phone) { toast({ type: 'warning', title: '请填写手机号' }); return; }
   if (!/^1\d{10}$/.test(phone)) { toast({ type: 'warning', title: '手机号格式不对', sub: '需 11 位、以 1 开头' }); return; }
   if (booker_id && !validIdLocal(booker_id)) { toast({ type: 'warning', title: '身份证号格式或校验位错误' }); return; }
+  if (!booker_id) { toast({ type: 'warning', title: '请填写身份证号' }); return; }
   if (!selectedSlot) { toast({ type: 'warning', title: '请选择时段' }); return; }
-  if (!consent) { toast({ type: 'warning', title: '请先同意《个人信息处理告知》' }); return; }
+  if (!consent) { toast({ type: 'warning', title: '请先同意个人信息处理说明' }); return; }
 
   const btn = $('#submit');
   btn.disabled = true; btn.textContent = '提交中…';
@@ -93,30 +94,6 @@ $('#submit').addEventListener('click', async () => {
     toast({ type: 'danger', title: '网络错误' });
     btn.disabled = false; btn.textContent = '提交预约';
   }
-});
-
-// 隐私告知弹层
-const privacyText = `【个人信息处理告知】
-
-一、处理目的
-为完成"红旗粉丝家年华暨智能科技体验日"试乘体验预约、现场核销及活动组织。
-
-二、处理范围
-姓名、手机号（必填）；身份证号（选填，仅用于现场核验）；随行人姓名。
-
-三、存储与保护
-所有信息经 HMAC-SHA256 流密码加密存储于云端数据库，密钥与数据库分离。工作人员仅在必要时通过后台脱敏查看。
-
-四、保存期限
-活动结束后第 10 天自动销毁。期间您可凭核销链接随时"立即销毁"。
-
-五、您的权利
-您可随时取消预约、申请立即销毁个人信息。如对处理有疑问，可联系活动主办方。
-
-【我已阅读并同意上述告知】`;
-document.getElementById('privacyLink').addEventListener('click', (e) => {
-  e.preventDefault();
-  alert(privacyText);
 });
 
 function validIdLocal(s) {
