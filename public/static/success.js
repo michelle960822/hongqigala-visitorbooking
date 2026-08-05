@@ -76,6 +76,6 @@ async function load() {
   $('#iSlot').textContent = v.start + '–' + v.end;
   $('#iParty').textContent = v.party_size + ' 人' + (v.companions && v.companions.length ? '（含随行 ' + v.companions.join('、') + '）' : '');
   $('#cancelLink').href = '/cancel/' + token;
-  document.title = '预约成功 · ' + v.date + ' ' + v.start;
+  document.title = '预约成功 · Booked · ' + v.date + ' ' + v.start;
 }
 load();
