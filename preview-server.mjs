@@ -16,7 +16,7 @@ import { dec } from './src/crypto.js';
 
 // 预览用密钥（仅本地；生产请用 Cloudflare secret / CloudBase 环境变量）
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXY=';
-process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '404112';
+process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '888888';
 process.env.PEPPER = process.env.PEPPER || 'preview_pepper';
 process.env.REQUIRE_ID = process.env.REQUIRE_ID || '1';
 

@@ -69,7 +69,7 @@ async function load() {
   qr.addData(checkinUrl);
   qr.make();
   $('#qr').innerHTML = qr.createImgTag(5, 6);
-  const sc = v.short_code || sessionStorage.getItem('shortCode_' + token) || '------';
+  const sc = v.short_code || '------';
   $('#shortCode').textContent = sc;
   $('#iName').textContent = v.name + (v.phone ? '（' + v.phone.slice(0,3) + '****' + v.phone.slice(-4) + '）' : '');
   $('#iDate').textContent = v.date;

@@ -84,7 +84,10 @@ $('#submit').addEventListener('click', async () => {
     });
     const data = await r.json();
     if (data.ok) {
-      sessionStorage.setItem('shortCode_' + data.token, data.short_code || '');
+      // 存到"我的报名"列表
+      const prev = JSON.parse(localStorage.getItem('my_bookings') || '[]');
+      prev.push({ token: data.token, shortCode: data.short_code, time: Date.now() });
+      localStorage.setItem('my_bookings', JSON.stringify(prev));
       location.href = '/success/' + data.token;
     } else {
       toast({ type: 'danger', title: '预约失败', sub: data.msg || '请稍后再试' });
