@@ -1,7 +1,7 @@
 // 纯业务逻辑层：不依赖 HTTP 框架，便于在 Node 中直接单元测试。
 // 数据库访问通过传入的 db 适配器（D1 / MySQL 均实现相同接口：all / first / run）。
 
-import { enc, dec, sha256Hex, validId } from './crypto.js';
+import { enc, dec, sha256Hex, validIdOrPassport } from './crypto.js';
 
 export const SLOTS_SEED = [
   ['2026-08-14', '14:00', '16:00'],
@@ -74,9 +74,15 @@ export function maskPhone(s) {
 }
 export function maskIdNum(s) {
   if (!s) return '';
-  const d = String(s).replace(/[^\dXx]/g, '').toUpperCase();
-  if (d.length <= 8) return d;
-  return d.slice(0, 6) + '********' + d.slice(-4);
+  const raw = String(s).trim();
+  // 中国身份证：18位数字+X
+  const id = raw.replace(/[^\dXx]/g, '').toUpperCase();
+  if (id.length === 18 && /^\d{17}[\dX]$/.test(id)) {
+    return id.slice(0, 6) + '********' + id.slice(-4);
+  }
+  // 护照 / 其他证件：保留首尾各 2 位
+  if (raw.length <= 4) return raw;
+  return raw.slice(0, 2) + '***' + raw.slice(-2);
 }
 
 function fail(code, msg, http) {
@@ -103,9 +109,9 @@ export async function bookingCreate(db, cfg, input) {
   const phone = (input.phone || '').trim();
 
   if (!name) return fail('NAME_REQUIRED', '请填写姓名', 400);
-  if (cfg.REQUIRE_ID && !input.booker_id) return fail('ID_REQUIRED', '请填写身份证号', 400);
+  if (cfg.REQUIRE_ID && !input.booker_id) return fail('ID_REQUIRED', '请填写身份证号或护照号', 400);
   const booker_id = (input.booker_id || '').trim();
-  if (booker_id && !validId(booker_id)) return fail('ID_INVALID', '身份证号格式或校验位错误', 400);
+  if (booker_id && !validIdOrPassport(booker_id)) return fail('ID_INVALID', '证件号格式错误（身份证18位或护照5–20位字母数字）', 400);
   if (phone && !/^1\d{10}$/.test(phone)) return fail('PHONE_INVALID', '请填写正确的 11 位手机号', 400);
   if (companions.length > 2) return fail('TOO_MANY', '随行人最多 2 人', 400);
 

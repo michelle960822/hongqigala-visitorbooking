@@ -69,7 +69,7 @@ $('#submit').addEventListener('click', async () => {
   if (!name) { toast({ type: 'warning', title: '请填写姓名' }); return; }
   if (!phone) { toast({ type: 'warning', title: '请填写手机号' }); return; }
   if (!/^1\d{10}$/.test(phone)) { toast({ type: 'warning', title: '手机号格式不对', sub: '需 11 位、以 1 开头' }); return; }
-  if (booker_id && !validIdLocal(booker_id)) { toast({ type: 'warning', title: '身份证号格式或校验位错误' }); return; }
+  if (booker_id && !validIdOrPassportLocal(booker_id)) { toast({ type: 'warning', title: '证件号格式错误', sub: '身份证18位或护照5–20位字母数字' }); return; }
   if (!booker_id) { toast({ type: 'warning', title: '请填写身份证号' }); return; }
   if (!selectedSlot) { toast({ type: 'warning', title: '请选择时段' }); return; }
   if (!consent) { toast({ type: 'warning', title: '请先同意个人信息处理说明' }); return; }
@@ -107,5 +107,7 @@ function validIdLocal(s) {
   const c = '10X98765432'[sum % 11];
   return c === s[17].toUpperCase();
 }
+function validPassportLocal(s) { return /^[A-Za-z0-9]{5,20}$/.test(s); }
+function validIdOrPassportLocal(s) { return validIdLocal(s) || validPassportLocal(s); }
 
 loadSlots();

@@ -108,3 +108,15 @@ export function validId(idn) {
   for (let i = 0; i < 17; i++) s += parseInt(idn[i], 10) * weights[i];
   return idn[17].toUpperCase() === codes[s % 11];
 }
+
+// 护照号：5–20 位字母/数字（中外护照均适用）
+export function validPassport(s) {
+  if (typeof s !== 'string') return false;
+  return /^[A-Za-z0-9]{5,20}$/.test(s);
+}
+
+// 身份证或护照任一有效即可
+export function validIdOrPassport(s) {
+  if (validId(s)) return true;
+  return validPassport(s);
+}
