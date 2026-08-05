@@ -9,13 +9,13 @@
 <body>
   <section class="hero" style="padding:22px 20px 90px">
     <div class="hero-inner" style="text-align:center">
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:12px">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:24px">
         <span class="appbar-tag" id="loginTag" style="display:none;background:rgba(255,255,255,.18);color:#fff">✅ 已登录</span>
         <a class="appbar-tag" href="/" style="background:rgba(255,255,255,.18);color:#fff">🏠 返回报名</a>
         <button class="appbar-tag" id="logoutBtn" style="display:none;background:rgba(255,255,255,.18);color:#fff;border:none;cursor:pointer;font:inherit">退出</button>
       </div>
-      <h1 style="font-size:22px">红旗粉丝家年华<span class="dot">·</span>现场核销后台</h1>
-      <p>智能科技体验日 · 试乘预约核销</p>
+      <h1 style="font-size:22px">红旗粉丝家年华 · 试乘体验后台</h1>
+      <p>8月14日、8月15日</p>
     </div>
   </section>
 
@@ -39,6 +39,7 @@
       <div class="tab-pane active" data-pane="scan">
         <div class="card">
           <h2>📷 扫码核销</h2>
+          <p class="muted" style="font-size:12px;margin:0 0 10px">摄像头需 HTTPS 部署后生效。正式上线后可用手机后置摄像头扫码。</p>
           <div class="scan-card" id="scanCard">
             <span class="placeholder">📷</span>
             <video id="scanVideo" autoplay playsinline muted style="display:none"></video>
