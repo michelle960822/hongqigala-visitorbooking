@@ -40,7 +40,7 @@ function renderSlots() {
     return `
       <div class="slot-card ${soldOut ? 'disabled' : ''} ${selectedSlot === s.id ? 'active' : ''}" data-id="${s.id}">
         <div class="t">${s.start_time}–${s.end_time}</div>
-        <div class="c">${soldOut ? '已约满' : '余 ' + s.available}</div>
+        <div class="c">${soldOut ? '已约满 · Full' : '余 ' + s.available + ' · ' + s.available + ' left'}</div>
       </div>
     `;
   }).join('');

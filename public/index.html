@@ -51,7 +51,7 @@
       </div>
       <div class="field">
         <label>身份证号 / 护照号 <span class="req">*</span> <span class="muted" style="font-size:11px;font-weight:400">ID / Passport No.</span></label>
-        <input class="input" id="booker_id" placeholder="18 位身份证号，或 5–20 位护照号 ｜ 18-digit ID or 5–20 char passport" maxlength="20" />
+        <input class="input" id="booker_id" placeholder="18位身份证号 / 5-20 Digit Passport Number" maxlength="20" />
         <p class="muted" style="margin:6px 0 0;font-size:12px">
           加密存储，仅用于活动现场身份核验，活动结束后自动销毁。
           <br><span style="font-size:11px">Encrypted &amp; auto-deleted after the event.</span>
@@ -66,8 +66,8 @@
       <div class="alert danger">
         <span class="ico">⏰</span>
         <div class="body">
-          <div class="title">仅在所选<span class="hl">预约时段</span>内可现场核销</div>
-          <div class="desc">请按时到场，过期作废。Valid only within your booked time slot.</div>
+          <div class="title">仅在所选<span class="hl">预约时段</span>内可核销</div>
+          <div class="desc" style="font-size:12px;color:var(--text-soft);margin-top:2px">请按时到场，过期作废。<br><span style="font-size:11px">Check-in is only valid <span class="hl" style="font-size:11px">within your booked time slot</span>. Late arrivals will not be admitted.</span></div>
         </div>
       </div>
 
@@ -77,7 +77,10 @@
       </div>
       <label class="checkbox-row">
         <input type="checkbox" id="consent" />
-        <span>我已阅读并同意上述信息处理方式 &nbsp;<span class="muted" style="font-size:11px">I agree to the above</span></span>
+        <div style="line-height:1.5">
+          <div style="font-size:13px">我已阅读并同意上述信息处理方式</div>
+          <div class="muted" style="font-size:11px">I have read and agree to the above data handling policy.</div>
+        </div>
       </label>
 
       <button class="btn btn-primary btn-lg btn-block" id="submit">提交预约 Submit Booking</button>
