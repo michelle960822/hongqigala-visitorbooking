@@ -19,7 +19,7 @@ BASE_URL = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "auto-expo-booking"
-database_id = "REPLACE_WITH_YOUR_D1_ID"
+database_id = "23cfe14d-abdf-4321-a83e-93736cace739"
 
 # 机密配置（ENCRYPTION_KEY）请改用 secret，不要写在这里：
 #   npx wrangler secret put ENCRYPTION_KEY
