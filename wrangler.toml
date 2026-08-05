@@ -14,6 +14,7 @@ REQUIRE_ID = "1"
 CAPACITY = "30"
 PEPPER = "change_me_pepper"
 BASE_URL = ""
+ENCRYPTION_KEY = "GiEXN0O2dYCFeJZzBilou4t3pr+hAJzLpvWHRXrt6hQ="
 
 # D1 数据库绑定
 [[d1_databases]]

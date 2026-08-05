@@ -104,48 +104,34 @@ export async function bookingCreate(db, cfg, input) {
   const date = input.date;
   const slot_id = Number(input.slot_id);
   const name = (input.name || '').trim();
-  let companions = Array.isArray(input.companions) ? input.companions : [];
-  companions = companions.map((c) => String(c).trim()).filter(Boolean);
-  const phone = (input.phone || '').trim();
-
-  if (!name) return fail('NAME_REQUIRED', '请填写姓名', 400);
-  if (cfg.REQUIRE_ID && !input.booker_id) return fail('ID_REQUIRED', '请填写身份证号或护照号', 400);
   const booker_id = (input.booker_id || '').trim();
-  if (booker_id && !validIdOrPassport(booker_id)) return fail('ID_INVALID', '证件号格式错误（身份证18位或护照5–20位字母数字）', 400);
-  if (phone && !/^1\d{10}$/.test(phone)) return fail('PHONE_INVALID', '请填写正确的 11 位手机号', 400);
+  const phone = (input.phone || '').trim();
+  let companions = Array.isArray(input.companions) ? input.companions.map(c=>String(c).trim()).filter(Boolean) : [];
+  
+  if (!name) return fail('NAME_REQUIRED', '请填写姓名', 400);
+  if (cfg.REQUIRE_ID && !booker_id) return fail('ID_REQUIRED', '请填写身份证号或护照号', 400);
+  if (booker_id && !validIdOrPassport(booker_id)) return fail('ID_INVALID', '证件号格式错误', 400);
+  if (phone && !/^1\d{10}$/.test(phone)) return fail('PHONE_INVALID', '手机号错误', 400);
   if (companions.length > 2) return fail('TOO_MANY', '随行人最多 2 人', 400);
-
+  
   const party_size = 1 + companions.length;
-  const key = booker_id || name;
   const token = newToken();
   const short_code = await newShortCode(db);
   const now = new Date().toISOString().slice(0, 19);
-  const kh = await keyHash(cfg.PEPPER, key);
-
-  // 先查重复（避免先扣名额再回滚）
-  const dup = await db.first(
-    "SELECT id FROM bookings WHERE booker_key_hash=? AND booking_date=? AND status='active'",
-    [kh, date]
-  );
+  const kh = await keyHash(cfg.PEPPER, booker_id || name);
+  
+  const dup = await db.first("SELECT id FROM bookings WHERE booker_key_hash=? AND booking_date=? AND status='active'", [kh, date]);
   if (dup) return fail('DUPLICATE', '您今天已预约过该活动', 409);
-
-  // 原子扣减名额（WHERE available>=N 防止超卖）
-  const upd = await db.run(
-    'UPDATE slots SET available=available-? WHERE id=? AND available>=?',
-    [party_size, slot_id, party_size]
-  );
-  if (upd.changes === 0) return fail('SOLD_OUT', '该时段名额不足或已约满', 409);
-
+  
+  const upd = await db.run('UPDATE slots SET available=available-? WHERE id=? AND available>=?', [party_size, slot_id, party_size]);
+  if (upd.changes === 0) return fail('SOLD_OUT', '该时段名额不足', 409);
+  
   try {
-    const ins = await db.run(
-      'INSERT INTO bookings(token, short_code, booker_key_hash, booking_date, slot_id, party_size, booker_name_enc, booker_id_enc, phone_enc, created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
+    await db.run(
+      'INSERT INTO bookings(token,short_code,booker_key_hash,booking_date,slot_id,party_size,booker_name_enc,booker_id_enc,phone_enc,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
       [token, short_code, kh, date, slot_id, party_size, await enc(name), booker_id ? await enc(booker_id) : null, phone ? await enc(phone) : null, now]
     );
-    for (const cn of companions) {
-      await db.run('INSERT INTO companions(booking_id, name_enc) VALUES(?,?)', [ins.insertId, await enc(cn)]);
-    }
   } catch (e) {
-    // 补偿：回滚名额，并区分重复预约
     await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [party_size, slot_id]);
     if (isUniqueError(e)) return fail('DUPLICATE', '您今天已预约过该活动', 409);
     throw e;

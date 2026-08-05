@@ -26,71 +26,41 @@ function base64ToBytes(b64) {
   return out;
 }
 
-// ---------- HMAC-SHA256 ----------
-let _hmacKey = null;
-async function hmacSha256(msg) {
-  if (!KEY) throw new Error('crypto 未初始化，请先调用 initCrypto');
-  if (!_hmacKey) {
-    _hmacKey = await crypto.subtle.importKey(
-      'raw', KEY, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-  }
-  const sig = await crypto.subtle.sign('HMAC', _hmacKey, msg);
-  return new Uint8Array(sig);
-}
+// ---------- AES-256-GCM（标准 Web Crypto，Workers/Pages 原生支持）----------
+let _aesKey = null;
 
-// 大端 64 位整数（等价 Python c.to_bytes(8, 'big')）
-function uint64be(n) {
-  const out = new Uint8Array(8);
-  let v = BigInt(n);
-  for (let i = 7; i >= 0; i--) {
-    out[i] = Number(v & 0xffn);
-    v >>= 8n;
+async function getKey() {
+  if (!KEY) throw new Error('crypto 未初始化');
+  if (!_aesKey) {
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', KEY));
+    _aesKey = await crypto.subtle.importKey('raw', h, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   }
-  return out;
-}
-
-// 密钥流：HMAC(KEY, nonce || c) 逐块拼接，直到足够长度
-async function keystream(nonce, length) {
-  const out = new Uint8Array(length);
-  let pos = 0;
-  let c = 0n;
-  while (pos < length) {
-    const msg = new Uint8Array(nonce.length + 8);
-    msg.set(nonce, 0);
-    msg.set(uint64be(c), nonce.length);
-    const h = await hmacSha256(msg);
-    const take = Math.min(h.length, length - pos);
-    out.set(h.subarray(0, take), pos);
-    pos += take;
-    c++;
-  }
-  return out;
+  return _aesKey;
 }
 
 export async function enc(s) {
   if (s === null || s === undefined || s === '') return s === null || s === undefined ? s : '';
   const data = new TextEncoder().encode(String(s));
-  const nonce = crypto.getRandomValues(new Uint8Array(16));
-  const ks = await keystream(nonce, data.length);
-  const ct = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) ct[i] = data[i] ^ ks[i];
-  const combined = new Uint8Array(16 + data.length);
-  combined.set(nonce, 0);
-  combined.set(ct, 16);
-  return bytesToBase64(combined);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const k = await getKey();
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, data));
+  const out = new Uint8Array(iv.length + ct.length);
+  out.set(iv, 0);
+  out.set(ct, iv.length);
+  return bytesToBase64(out);
 }
 
 export async function dec(s) {
   if (!s) return '';
   const raw = base64ToBytes(s);
-  if (raw.length < 16) return '';
-  const nonce = raw.subarray(0, 16);
-  const ct = raw.subarray(16);
-  const ks = await keystream(nonce, ct.length);
-  const out = new Uint8Array(ct.length);
-  for (let i = 0; i < ct.length; i++) out[i] = ct[i] ^ ks[i];
-  return new TextDecoder().decode(out);
+  if (raw.length < 12) return '';
+  const iv = raw.subarray(0, 12);
+  const ct = raw.subarray(12);
+  try {
+    const k = await getKey();
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, k, ct);
+    return new TextDecoder().decode(pt);
+  } catch { return ''; }
 }
 
 export async function sha256Hex(str) {
