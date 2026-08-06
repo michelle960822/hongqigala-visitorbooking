@@ -55,7 +55,6 @@ async function load() {
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
             <a class="btn btn-primary btn-sm" href="/success/${encodeURIComponent(item.token)}">查看</a>
-            ${v.status === 'active' ? `<a class="btn btn-ghost btn-sm" href="/cancel/${encodeURIComponent(item.token)}">取消</a>` : ''}
           </div>
         </div>
       `;

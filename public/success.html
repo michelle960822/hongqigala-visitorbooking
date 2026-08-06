@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>预约成功 · 红旗粉丝家年华 | Booked · Hongqi Gala</title>
+  <title>预约详情 · 红旗粉丝家年华</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -21,8 +21,11 @@
 
   <main class="main" style="margin-top:-36px">
     <div class="card center" style="padding:16px 18px">
-      <!-- 截图提示 -->
-      <div style="background:#fff3cd;border:1px solid #f5c518;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:left;line-height:1.6">
+      <!-- 状态横幅（已取消/已核销时才显示） -->
+      <div id="statusBanner" style="display:none"></div>
+
+      <!-- 截图提示（已取消/已核销时不显示） -->
+      <div id="screenshotHint" style="background:#fff3cd;border:1px solid #f5c518;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:left;line-height:1.6">
         <div style="display:flex;align-items:flex-start;gap:10px">
           <span style="font-size:26px;line-height:1;flex-shrink:0">📸</span>
           <div style="font-size:14px;color:#6b3a05;line-height:1.7">
@@ -37,7 +40,7 @@
       </div>
 
       <!-- 二维码 -->
-      <div class="qr-wrap" style="padding:10px;margin:0 auto 10px;max-width:180px">
+      <div id="qrWrap" class="qr-wrap" style="padding:10px;margin:0 auto 10px;max-width:180px">
         <div id="qr" style="min-width:140px;min-height:140px;display:grid;place-items:center;font-size:13px;color:#999">生成中… Loading…</div>
       </div>
 
@@ -57,10 +60,7 @@
         </dl>
       </div>
 
-      <div class="row-actions" style="justify-content:center;gap:8px">
-        <a class="btn btn-ghost btn-sm" id="cancelLink" href="#">取消预约 · Cancel</a>
-        <a class="btn btn-primary btn-sm" href="/">再次预约 · Book Again</a>
-      </div>
+      <div id="actions" class="row-actions" style="justify-content:center;gap:8px"></div>
     </div>
   </main>
 

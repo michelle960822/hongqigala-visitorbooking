@@ -143,10 +143,10 @@ export async function bookingCreate(db, cfg, input) {
 export async function bookingCancel(db, cfg, token) {
   const b = await db.first('SELECT * FROM bookings WHERE token=?', [token]);
   if (!b) return { ok: false, msg: '预约不存在', http: 404 };
-  if (b.status === 'active') {
-    await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
-    await db.run("UPDATE bookings SET status='cancelled' WHERE token=?", [token]);
-  }
+  if (b.status === 'cancelled') return { ok: false, msg: '该预约已取消，无需重复操作', http: 409 };
+  if (b.attended) return { ok: false, msg: '该预约已核销，不能取消', http: 409 };
+  await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
+  await db.run("UPDATE bookings SET status='cancelled' WHERE token=?", [token]);
   return { ok: true, http: 200 };
 }
 

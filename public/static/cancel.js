@@ -20,6 +20,18 @@ async function load() {
   if (r.status !== 200) { $('#info').innerHTML = '<div class="muted">预约不存在</div>'; return; }
   const v = await r.json();
   if (!v || !v.name) { $('#info').innerHTML = '<div class="muted">预约不存在</div>'; return; }
+  if (v.attended) {
+    $('#info').innerHTML = `
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:16px;text-align:left">
+        <div style="font-size:18px;color:#7f1d1d;font-weight:700;margin-bottom:6px">❌ 已核销，不能取消</div>
+        <div style="font-size:13px;color:#991b1b;line-height:1.6">
+          该预约已于现场核销入场，二维码已被使用，<br>系统不允许取消已核销的预约。
+        </div>
+        <div style="font-size:12px;color:#7f1d1d;margin-top:6px">This booking has been checked in and cannot be cancelled.</div>
+      </div>`;
+    $('#confirmBtn').style.display = 'none';
+    return;
+  }
   if (v.status !== 'active') {
     $('#info').innerHTML = '<p class="muted" style="font-size:15px;padding:20px 0">该预约已取消，名额已释放</p>';
     $('#confirmBtn').style.display = 'none';
@@ -41,8 +53,9 @@ $('#confirmBtn').addEventListener('click', async () => {
     toast({ type: 'success', title: '已取消', sub: '名额已实时释放' });
     setTimeout(() => { location.href = '/'; }, 1500);
   } else {
+    const data = await r.json().catch(() => ({}));
     $('#confirmBtn').disabled = false;
     $('#confirmBtn').textContent = '🗑 立即删除我的报名信息';
-    toast({ type: 'danger', title: '取消失败，请稍后重试' });
+    toast({ type: 'danger', title: data.msg || '取消失败，请稍后重试' });
   }
 });

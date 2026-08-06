@@ -179,10 +179,10 @@ export function buildApp({ db, config, assets }) {
   app.post('/api/admin/cancel/:id', requireAdmin, async (c) => {
     const id = c.req.param('id');
     const b = await db.first("SELECT * FROM bookings WHERE id=? AND status='active'", [id]);
-    if (b) {
-      await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
-      await db.run("UPDATE bookings SET status='cancelled' WHERE id=?", [id]);
-    }
+    if (!b) return c.json({ ok: false, msg: '该预约已是无效状态' }, 409);
+    if (b.attended) return c.json({ ok: false, msg: '该预约已核销，不能取消' }, 409);
+    await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
+    await db.run("UPDATE bookings SET status='cancelled' WHERE id=?", [id]);
     return c.json({ ok: true });
   });
 
