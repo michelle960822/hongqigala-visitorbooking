@@ -14,6 +14,7 @@ import {
   markAttended,
   cleanupOld,
   exportCsv,
+  rescheduleBooking,
 } from './logic.js';
 
 export function buildApp({ db, config, assets }) {
@@ -57,6 +58,7 @@ export function buildApp({ db, config, assets }) {
     const token = c.req.param('token');
     const b = await db.first('SELECT * FROM bookings WHERE token=?', [token]);
     if (!b) return c.json({ ok: true, msg: '记录不存在或已删除' });
+    if (b.attended) return c.json({ ok: false, msg: '该预约已核销，不可销毁' }, 409);
     if (b.status === 'active') {
       await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
     }
@@ -184,6 +186,13 @@ export function buildApp({ db, config, assets }) {
     await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
     await db.run("UPDATE bookings SET status='cancelled' WHERE id=?", [id]);
     return c.json({ ok: true });
+  });
+
+  // 工作人员后台改约：将预约从原时段迁至目标时段（已核销不可改约）
+  app.post('/api/admin/reschedule/:id', requireAdmin, async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = await rescheduleBooking(db, config, c.req.param('id'), body.new_slot_id);
+    return c.json(res, res.http);
   });
 
   // 清理过期数据

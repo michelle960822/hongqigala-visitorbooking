@@ -150,6 +150,53 @@ export async function bookingCancel(db, cfg, token) {
   return { ok: true, http: 200 };
 }
 
+// ---------- 工作人员后台改约：原子操作（占新→建新 rescheduled=1→取消旧） ----------
+export async function rescheduleBooking(db, cfg, bookingId, newSlotId) {
+  const id = Number(bookingId);
+  const slotId = Number(newSlotId);
+
+  // 1. 原预约校验
+  const b = await db.first("SELECT * FROM bookings WHERE id=? AND status='active'", [id]);
+  if (!b) return { ok: false, msg: '该预约不可改约（已取消或不存在）', http: 409 };
+  if (b.attended) return { ok: false, msg: '该预约已核销，不可改约', http: 409 };
+
+  // 2. 新时段校验
+  const newSlot = await db.first('SELECT * FROM slots WHERE id=?', [slotId]);
+  if (!newSlot) return { ok: false, msg: '目标时段不存在', http: 404 };
+  if (newSlot.available < b.party_size) return { ok: false, msg: '目标时段名额不足', http: 409 };
+
+  // 3. 原子：先占新时段名额
+  const upd = await db.run('UPDATE slots SET available=available-? WHERE id=? AND available>=?', [b.party_size, slotId, b.party_size]);
+  if (upd.changes === 0) return { ok: false, msg: '目标时段名额不足', http: 409 };
+
+  // 4. 建新 booking（rescheduled=1）
+  const token = newToken();
+  const short_code = await newShortCode(db);
+  const now = new Date().toISOString().slice(0, 19);
+  const oldComps = await db.all('SELECT name_enc FROM companions WHERE booking_id=?', [id]);
+
+  try {
+    await db.run(
+      'INSERT INTO bookings(token,short_code,booker_key_hash,booking_date,slot_id,party_size,booker_name_enc,booker_id_enc,phone_enc,created_at,rescheduled) VALUES(?,?,?,?,?,?,?,?,?,?,1)',
+      [token, short_code, b.booker_key_hash, newSlot.date, slotId, b.party_size, b.booker_name_enc, b.booker_id_enc, b.phone_enc, now]
+    );
+    // 复制随行人到新预约
+    for (const c of oldComps) {
+      await db.run('INSERT INTO companions(booking_id, name_enc) VALUES((SELECT id FROM bookings WHERE token=?), ?)', [token, c.name_enc]);
+    }
+  } catch (e) {
+    // 回滚：释放新时段名额
+    await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, slotId]);
+    throw e;
+  }
+
+  // 5. 取消原预约，释放旧时段名额
+  await db.run('UPDATE slots SET available = MIN(capacity, available+?) WHERE id=?', [b.party_size, b.slot_id]);
+  await db.run("UPDATE bookings SET status='cancelled' WHERE id=?", [id]);
+
+  return { ok: true, token, short_code, http: 200 };
+}
+
 // ---------- 扫码核销（支持 token 或 6 位短码） ----------
 export async function bookingCheckin(db, cfg, code) {
   if (!code) return { ok: false, msg: '请提供核销码', http: 200 };
@@ -167,7 +214,23 @@ async function _doCheckin(db, b, code) {
   if (!b) return { ok: false, msg: '核销码无效', http: 200 };
   if (b.status !== 'active') return { ok: false, msg: '该预约已取消，核销码失效', http: 200 };
   if (b.attended) return { ok: true, msg: '已核销，请勿重复', http: 200, already: true };
-  await db.run('UPDATE bookings SET attended=1 WHERE token=?', [b.token]);
+
+  // 校验核销是否在预约时段内：当前北京时间须在 slot.date + start_time ~ end_time 范围内
+  const slot = await db.first('SELECT * FROM slots WHERE id=?', [b.slot_id]);
+  if (slot) {
+    const nowCST = new Date(new Date().getTime() + 8 * 3600000);
+    const nowDate = nowCST.toISOString().slice(0, 10);
+    const nowTime = nowCST.toISOString().slice(11, 16);
+    if (nowDate !== slot.date || nowTime < slot.start_time || nowTime > slot.end_time) {
+      return {
+        ok: false,
+        msg: `非预约时段（${slot.date} ${slot.start_time}-${slot.end_time}），当前为 ${nowDate} ${nowTime}，请在时段内核销`,
+        http: 200,
+      };
+    }
+  }
+
+  await db.run('UPDATE bookings SET attended=1, attended_at=? WHERE token=?', [new Date().toISOString().slice(0, 19), b.token]);
   return { ok: true, msg: '核销成功，欢迎体验！', http: 200 };
 }
 
@@ -233,6 +296,7 @@ export async function getDashboard(db) {
     const phoneFull = r.phone_enc ? await dec(r.phone_enc) : '';
     out.push({
       id: r.id,
+      slot_id: r.slot_id,
       short_code: r.short_code || '',
       date: r.date,
       start: r.start_time,
@@ -247,7 +311,9 @@ export async function getDashboard(db) {
       party_size: r.party_size,
       status: r.status,
       attended: r.attended,
+      attended_at: r.attended_at || '',
       created_at: r.created_at,
+      rescheduled: r.rescheduled || 0,
     });
   }
   return out;
@@ -274,10 +340,24 @@ function csvCell(v) {
 
 export async function exportCsv(db) {
   const rows = await getDashboard(db);
-  const header = ['预约ID', '日期', '时段', '主预约人', '身份证', '随行人', '总人数', '状态', '是否到场', '预约时间'];
+  const header = ['预约ID', '日期', '时段', '主预约人', '身份证', '随行人', '总人数', '状态', '是否到场', '首次签到日期', '签到是否在预约日内', '是否改期', '预约时间'];
   const lines = [header.map(csvCell).join(',')];
   for (const r of rows) {
     const status = r.status !== 'active' ? '已取消' : r.attended ? '已到场' : '未到场';
+    // 签到日期
+    const signDate = r.attended_at ? r.attended_at.slice(0, 10) : '-';
+    // 签到是否在预约日内
+    let signMatch = '-';
+    if (r.attended_at) {
+      if (r.attended_at.slice(0, 10) === r.date) {
+        signMatch = '是';
+      } else {
+        const sd = new Date(r.attended_at.slice(0, 10));
+        const bd = new Date(r.date);
+        const diff = Math.abs(Math.round((bd - sd) / 86400000));
+        signMatch = `否，差${diff}天`;
+      }
+    }
     lines.push(
       [
         r.id,
@@ -289,6 +369,9 @@ export async function exportCsv(db) {
         r.party_size,
         status,
         r.attended ? '是' : '否',
+        signDate,
+        signMatch,
+        r.rescheduled ? '是' : '否',
         r.created_at,
       ]
         .map(csvCell)

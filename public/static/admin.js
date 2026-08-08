@@ -323,11 +323,15 @@ function renderManageTable(list) {
       ? '<span class="badge danger">已取消</span>'
       : x.attended
         ? '<span class="badge success">已到场</span>'
-        : '<span class="badge warning">待核销</span>';
+        : (x.rescheduled
+          ? '<span class="badge warning">待核销</span> <span class="badge" style="background:#fef3c7;color:#92400e;font-size:11px">🔄改期</span>'
+          : '<span class="badge warning">待核销</span>');
     // 操作按钮
     let actionBtns = '';
     if (x.status === 'active' && !x.attended) {
       actionBtns = `<button class="btn btn-ghost btn-sm" data-mark="${x.id}">标记到场</button>`;
+      // 改约按钮（仅未核销的有效预约可改约）
+      actionBtns += ` <button class="btn btn-ghost btn-sm" data-reschedule="${x.id}" data-date="${x.date}" data-slot="${x.start}-${x.end}" data-slot-id="${x.slot_id}">🔄 改约</button>`;
     } else if (x.status === 'active' && x.attended) {
       actionBtns = `<button class="btn btn-ghost btn-sm" data-unmark="${x.id}">取消标记</button>`;
     }
@@ -348,6 +352,7 @@ function renderManageTable(list) {
   // 绑定操作
   body.querySelectorAll('[data-mark]').forEach((b) => b.addEventListener('click', () => doMark(b.dataset.mark)));
   body.querySelectorAll('[data-unmark]').forEach((b) => b.addEventListener('click', () => doUnmark(b.dataset.unmark)));
+  body.querySelectorAll('[data-reschedule]').forEach((b) => b.addEventListener('click', () => doReschedule(b)));
 }
 function maskNameJs(s) {
   if (!s) return '';
@@ -375,6 +380,73 @@ async function doAdminCancel(id) {
     toast({ type: 'success', title: '已取消' });
     refreshManage();
   } else { toast({ type: 'danger', title: '取消失败' }); }
+}
+
+// ====== 后台改约（inline 时段选择器） ======
+async function doReschedule(btn) {
+  const id = btn.dataset.reschedule;
+  const currentDate = btn.dataset.date;
+  const currentSlot = btn.dataset.slot;
+  const td = btn.parentElement;
+
+  // 获取全量时段数据（与报名页实时一致）
+  const r = await api('/api/slots');
+  if (r.status !== 200 || !Array.isArray(r.data)) {
+    toast({ type: 'danger', title: '获取时段失败' });
+    return;
+  }
+  const slots = r.data;
+
+  // 过滤：排除原时段、名额不足的时段
+  const currentSlotId = Number(btn.dataset.slotId);
+  const candidates = slots.filter(
+    (s) => s.id !== currentSlotId && s.available > 0
+  );
+
+  if (candidates.length === 0) {
+    toast({ type: 'warning', title: '无可用的其他时段' });
+    return;
+  }
+
+  // 替换操作单元格为 inline 选择器
+  const options = candidates.map((s) =>
+    `<option value="${s.id}">${s.date} ${s.start_time}-${s.end_time}（余${s.available}）</option>`
+  ).join('');
+
+  td.innerHTML = `
+    <select class="select" id="rescheduleSelect_${id}" style="max-width:160px;font-size:11px">${options}</select>
+    <button class="btn btn-primary btn-sm" id="confirmReschedule_${id}" style="margin-left:4px">✅</button>
+    <button class="btn btn-ghost btn-sm" id="cancelReschedule_${id}" style="margin-left:2px">✖</button>
+  `;
+
+  // 保存原 booking 的 slot_id（从 data attribute 无法获取，需从 table row 的 bookingId 关联）
+  // 直接存 id 到 data 上供后端使用
+  const confirmBtn = td.querySelector(`#confirmReschedule_${id}`);
+  const cancelBtn = td.querySelector(`#cancelReschedule_${id}`);
+
+  confirmBtn.addEventListener('click', async () => {
+    const sel = td.querySelector(`#rescheduleSelect_${id}`);
+    const newSlotId = sel.value;
+    if (!newSlotId) return;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳';
+    const rr = await api('/api/admin/reschedule/' + id, {
+      method: 'POST',
+      body: JSON.stringify({ new_slot_id: Number(newSlotId) }),
+    });
+    if (rr.status === 200 && rr.data && rr.data.ok) {
+      toast({ type: 'success', title: '改约成功', sub: '名额已实时同步' });
+      refreshManage();
+    } else {
+      toast({ type: 'danger', title: '改约失败', sub: (rr.data && rr.data.msg) || '操作失败' });
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '✅';
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    refreshManage(); // 简单刷新还原
+  });
 }
 $('#refreshManageBtn').addEventListener('click', refreshManage);
 $('#manageDate').addEventListener('change', refreshManage);
